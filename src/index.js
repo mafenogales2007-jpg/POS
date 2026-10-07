@@ -1,4 +1,5 @@
-const express = require('express');
+// const express = require('express');   // CommonJS
+import express from 'express';           // ESModule
 
 const app = express();
 

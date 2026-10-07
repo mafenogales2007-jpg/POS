@@ -13,7 +13,7 @@
   "author": "Juan Carlos Jiménez Gutiérrez <jangojes.dev@gmail.com>",
   "license": "ISC",
   "main": "index.js",
-  "type": "commonjs",
+  "type": "module",
   "scripts": {
     "dev": "node --watch src/index.js"
   },
