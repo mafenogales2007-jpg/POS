@@ -1,7 +1,17 @@
 // const express = require('express');   // CommonJS
 import express from 'express';           // ESModule
 
+import usersRouter from './routes/users.routes.js';
+
 const app = express();
+
+// Definiendo 1 endpoint (ruta de entrada)
+app.get('/health', (req, res) => {
+    res.json({ msg: 'Servidor de SenaStore Funcionando!' });
+});
+
+//Enlazar todas las rutas
+app.use('/api/users', usersRouter);
 
 // Iniciar el servidor
 const port = 3000;
