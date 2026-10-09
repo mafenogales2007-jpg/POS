@@ -1,3 +1,4 @@
+// Controlador define quien hace una accion especifica 
 const createUser = (req, res) => {
     res.json({ msg: 'Listar todos los usuarios' });
 }
@@ -15,8 +16,6 @@ const updaUser = (req, res) => {
 const deleteUser = (req, res) => {
     res.json({ msg: 'Eliminar todos los usuarios' });
 }
-
-
 
 export {createUser, registerUser, updateUser, updaUser, deleteUser}
 

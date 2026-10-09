@@ -4,14 +4,10 @@ import { createUser, deleteUser, registerUser, updateUser, updaUser } from '../c
 const router = Router();
 
 //Definir rutas para users
-router.get('/', createUser);
-
-router.post('/', registerUser);
-
-router.put('/', updateUser);
-
-router.patch('/', updaUser);
-
-router.delete('/', deleteUser);
+router.get('/', createUser );
+router.post('/', registerUser );
+router.put('/', updateUser );
+router.patch('/', updaUser );
+router.delete('/', deleteUser );
 
 export default router;
