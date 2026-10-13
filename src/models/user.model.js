@@ -17,8 +17,13 @@ const UserSchema = new mongoose.Schema({
         trim: true,
         required: true 
     },
+    role: {
+        type: String,
+        enum: ['ADMIN', 'SELLER'],
+        default: 'ADMIN'
+    }
 },{
-
+    timestamps: true       //Crear automaticamente createAT, uPDATEAT
 });
 
 // Parte 2 : definir el modelo. Dicho modelo esta atado al nombre del documento
