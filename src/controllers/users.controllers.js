@@ -1,21 +1,23 @@
 // Controlador define quien hace una accion especifica 
-const createUser = (req, res) => {
-    res.json({ msg: 'Listar todos los usuarios' });
-}
-
 const registerUser = (req, res) => {
-    res.json({ msg: 'Registrar todos los usuarios' });
-}
-const updateUser = (req, res) => {
-    res.json({ msg: 'Actualizar todo' });
+    const user = req.body;
+
+    res.json({ msg: 'Registra ususario ', user });
 }
 
-const updaUser = (req, res) => {
-    res.json({ msg: 'Actualizar todos los usuarios' });
+const getUser = (req, res) => {
+    res.json({ msg: 'Registra usuario' });
+}
+const updateUserPatch = (req, res) => {
+    res.json({ msg: 'Actualizar usuario' });
+}
+
+const updaUserPut = (req, res) => {
+    res.json({ msg: 'Actualiza usuario' });
 }
 const deleteUser = (req, res) => {
     res.json({ msg: 'Eliminar todos los usuarios' });
 }
 
-export {createUser, registerUser, updateUser, updaUser, deleteUser}
+export {registerUser, updateUserPatch, updaUserPut, deleteUser, getUser}
 

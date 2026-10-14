@@ -2,8 +2,12 @@
 import express from 'express';           // ESModule
 
 import usersRouter from './routes/users.routes.js';
+import conexion from './config/mongo.config.js';
 
-const app = express();
+const app = express();    // Instancia de express
+conexion(); //ejecuta la conexion a la base de datos 
+
+app.use(express.json());  // habilita a la aplicacion para interpretar JSON   
 
 // Definiendo 1 endpoint (ruta de entrada)
 app.get('/health', (req, res) => {
