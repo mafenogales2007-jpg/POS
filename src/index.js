@@ -1,7 +1,7 @@
 // const express = require('express');   // CommonJS
 import express from 'express';           // ESModule
 
-import usersRouter from './routes/users.routes.js';
+import usersRouter from './rourtes/users.rourtes.js';
 import conexion from './config/mongo.config.js';
 
 const app = express();    // Instancia de express

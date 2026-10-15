@@ -31,7 +31,7 @@ const UserSchema = new mongoose.Schema({
 });
 
 // Parte 2 : definir el modelo. Dicho modelo esta atado al nombre del documento
-const UserModel = model(
+const UserModel = mongoose.model(
     'user',          //Nombre de la coleccion (pluralizar automaticamente)
     UserSchema       // Nombre del esquema que define la estructura de datos
 );
