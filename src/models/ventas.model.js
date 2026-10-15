@@ -1,5 +1,5 @@
 // src/models/ventas.model.js
-import db from '../config/mongo.config.js'; 
+import mongoose from '../config/mongo.config.js'; 
 
 export const VentasModel = {
   // Crear una nueva venta junto con sus detalles
