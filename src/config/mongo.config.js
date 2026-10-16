@@ -1,8 +1,8 @@
 import mongoose from 'mongoose';
 
 
-const URL_LOCAL = 'mongodb://localhost:27017' // locahcosmongodb
-const URL_REMOTE = 'mongodb+srv://mafenogales2007_db_user:MAFO2007@mafo.nqrki56.mongodb.net/'
+
+const URL_REMOTE = process.env.URI_MONGO || 'mongodb://localhost:27017';
 
 
 const conexion = async() => {

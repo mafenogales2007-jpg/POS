@@ -5,6 +5,8 @@ import productosRouter from './routers/productos.routers.js';
 import categoriasRouter from './routers/categorias.routers.js';
 import detalleVentaRouter from './routers/detalleVenta.routers.js';
 
+const port = process.env.PORT || 3001;
+
 const app = express();
 
 app.use(express.json());
@@ -22,8 +24,7 @@ app.use('/api/ventas', usersRouter);
 app.use('/api/categorias', categoriasRouter);
 app.use('/api/detalles-venta', detalleVentaRouter);
 
-// Iniciar el servidor
-const port = 3000;
+// Iniciar el servido
 app.listen(port, () => {
     console.log(`Servidor corriendo en http://localhost:${port}`);
 });

@@ -1,24 +1,38 @@
 import { DetalleVentaModel } from '../models/detalleVenta.model.js';
+import { ProductoModel } from '../models/productos.model.js';
 
 class DetalleVentaService {
     async crearDetalle(datos) {
         try {
+            // 1. Buscar el producto para verificar su stock disponible
+            const producto = await ProductoModel.findById(datos.producto);
+            if (!producto) {
+                return { success: false, message: 'Producto no encontrado' };
+            }
+
+            // 2. Validar si hay suficiente stock para la venta
+            if (producto.stock < datos.cantidad) {
+                return { 
+                    success: false, 
+                    message: `Stock insuficiente. Stock disponible: ${producto.stock}` 
+                };
+            }
+
+            // 3. Guardar el detalle de venta
             const nuevoDetalle = new DetalleVentaModel(datos);
             const detalleGuardado = await nuevoDetalle.save();
-            return { success: true, message: 'Detalle de venta creado exitosamente', data: detalleGuardado };
+
+            // 4. Descontar la cantidad vendida del stock del producto
+            producto.stock -= datos.cantidad;
+            await producto.save();
+
+            return { 
+                success: true, 
+                message: 'Detalle de venta creado y stock actualizado exitosamente', 
+                data: detalleGuardado 
+            };
         } catch (error) {
             throw new Error(`Error al crear el detalle de venta: ${error.message}`);
-        }
-    }
-
-    async obtenerDetalles() {
-        try {
-            const detalles = await DetalleVentaModel.find()
-                .populate('producto')
-                .populate('venta');
-            return { success: true, data: detalles };
-        } catch (error) {
-            throw new Error(`Error al obtener los detalles de venta: ${error.message}`);
         }
     }
 }
