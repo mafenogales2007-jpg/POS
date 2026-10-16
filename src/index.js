@@ -1,24 +1,22 @@
-// const express = require('express');   // CommonJS
-import express from 'express';           // ESModule
 
-import usersRouter from './rourtes/users.rourtes.js';
+import express from 'express';
+import reportesRouter from './routes/reportes.routes.js';
 import conexion from './config/mongo.config.js';
 
-const app = express();    // Instancia de express
-conexion(); //ejecuta la conexion a la base de datos 
+const app = express();
 
-app.use(express.json());  // habilita a la aplicacion para interpretar JSON   
+app.use(express.json());
 
-// Definiendo 1 endpoint (ruta de entrada)
+conexion();
+
 app.get('/health', (req, res) => {
     res.json({ msg: 'Servidor de SenaStore Funcionando!' });
 });
 
-//Enlazar todas las rutas
-app.use('/api/users', usersRouter);
+app.use('/api/reportes', reportesRouter);
 
-// Iniciar el servidor
 const port = 3000;
+
 app.listen(port, () => {
     console.log(`Servidor corriendo en http://localhost:${port}`);
 });
