@@ -6,8 +6,8 @@ const router = Router();
 //Definir rutas para users
 router.get('/', createVenta );
 router.post('/', registerVenta );
-router.put('/', updateVenta );
-router.patch('/', updaVenta );
-router.delete('/', deleteVenta );
+router.put('/:id', updateVenta );
+router.patch('/:id', updaVenta );
+router.delete('/:id', deleteVenta );
 
 export default router;
