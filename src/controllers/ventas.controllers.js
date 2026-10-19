@@ -17,8 +17,8 @@ const createVenta = async (req, res) => {
     }
 };
 
-// 2. Obtener todas las ventas
-const registerVenta = async (req, res) => {
+// 2. Obtener todas las ventas (Listar historial)
+const getVentas = async (req, res) => {
     try {
         const resultado = await ventasService.obtenerVentas();
         return res.status(200).json({
@@ -34,7 +34,7 @@ const registerVenta = async (req, res) => {
 };
 
 // 3. Obtener una venta por ID
-const updateVenta = async (req, res) => {
+const getVentaById = async (req, res) => {
     try {
         const { id } = req.params;
         const resultado = await ventasService.obtenerVentaPorId(id);
@@ -47,8 +47,8 @@ const updateVenta = async (req, res) => {
     }
 };
 
-// 4. Actualizar una venta (si lo requieres más adelante)
-const updaVenta = async (req, res) => {
+// 4. Actualizar una venta (Pendiente de implementar si lo requieres)
+const updateVenta = async (req, res) => {
     res.json({ msg: 'Actualizar venta (Pendiente de implementar)' });
 };
 
@@ -74,8 +74,8 @@ const deleteVenta = async (req, res) => {
 
 export {
     createVenta,
-    registerVenta,
+    getVentas,
+    getVentaById,
     updateVenta,
-    updaVenta,
     deleteVenta
 };

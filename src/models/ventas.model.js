@@ -4,7 +4,7 @@ import { Schema, model } from 'mongoose';
 const DetalleVentaSchema = new Schema({
     productoId: {
         type: Schema.Types.ObjectId,
-        ref: 'Producto', // Nombre del modelo de productos si existe
+        ref: 'Producto',
         required: true
     },
     nombreProducto: {
@@ -31,12 +31,13 @@ const DetalleVentaSchema = new Schema({
 const VentaSchema = new Schema(
     {
         cliente: {
-            type: String,
-            default: 'Cliente general'
+            type: Schema.Types.ObjectId,
+            ref: 'Cliente',
+            required: false
         },
         usuarioId: {
             type: Schema.Types.ObjectId,
-            ref: 'Usuario', // ID del vendedor/cajero que procesa la venta
+            ref: 'Usuario',
             required: false
         },
         productos: [DetalleVentaSchema],
@@ -65,7 +66,7 @@ const VentaSchema = new Schema(
         }
     },
     {
-        timestamps: true // Agrega automáticamentecreatedAt y updatedAt
+        timestamps: true
     }
 );
 

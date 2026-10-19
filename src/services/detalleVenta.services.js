@@ -2,6 +2,23 @@ import { DetalleVentaModel } from '../models/detalleVenta.model.js';
 import { ProductoModel } from '../models/productos.model.js';
 
 class DetalleVentaService {
+
+    // Método para obtener los detalles de venta trayendo la información del producto
+    async obtenerDetalles() {
+        try {
+            // El populate busca por la referencia que tengas configurada en tu modelo de DetalleVenta
+            const detalles = await DetalleVentaModel.find()
+                .populate('producto'); // Asegúrate de que en 'detalleVenta.model.js' el campo se llame 'producto' y tenga ref: 'Producto'
+            
+            return {
+                success: true,
+                data: detalles
+            };
+        } catch (error) {
+            throw new Error(`Error al obtener los detalles de venta: ${error.message}`);
+        }
+    }
+    
     async crearDetalle(datos) {
         try {
             // 1. Buscar el producto para verificar su stock disponible
