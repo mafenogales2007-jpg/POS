@@ -11,12 +11,21 @@ const createReport = async (req, res) => {
         const data = await dbCreateReport(req.body);
         res.status(201).json({ msg: "Reporte registrado", data });
     } catch (error) {
-        res.status(500).json({
-            msg: "Error al registrar el reporte",
-            error: error.message
-        });
+       console.error("Error al registrar reporte:", error);
+
+       
+       if (error.name === "ValidationError") {
+            const errors = {};
+            for (const field in error.errors) {
+                errors[field] = error.errors[field].message;
+
+            }
+            res.json({errors});    
+            }
+            res.json({ msg: "Error al registrar producto"});
+        };
     }
-};
+;
 
 const getReports = async (req, res) => {
     try {
