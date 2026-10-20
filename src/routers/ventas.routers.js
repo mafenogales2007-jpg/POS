@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { createVenta, getVentas, getVentaById, updateVenta, deleteVenta} from '../controllers/ventas.controllers.js';
+import { verificarToken } from '../middlewares/auth.middleware.js';
 
 const router = Router();
 
@@ -10,4 +11,4 @@ router.post('/', createVenta);        // Registrar una nueva venta
 router.put('/:id', updateVenta);      // Actualizar venta (pendiente)
 router.delete('/:id', deleteVenta);   // Eliminar o anular venta
 
-export default router;  
+export default router;
