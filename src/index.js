@@ -1,10 +1,18 @@
 
 import express from 'express';
+import 'dotenv/config';
+import cors from 'cors';
+import dotenv from 'dotenv';
 import reportesRouter from './routes/reportes.routes.js';
 import conexion from './config/mongo.config.js';
 import productsRouter from './routes/products.routes.js';
 
+const PORT = process.env.PORT || 3001;
 const app = express();
+
+dotenv.config();
+
+app.use(cors());
 
 app.use(express.json());
 
@@ -18,8 +26,6 @@ app.get('/health', (req, res) => {
 app.use('/api/reportes', reportesRouter);
 app.use( '/api/products', productsRouter);
 
-const port = 3000;
-
-app.listen(port, () => {
-    console.log(`Servidor corriendo en http://localhost:${port}`);
+app.listen(PORT, () => {
+    console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });

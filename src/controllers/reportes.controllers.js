@@ -9,30 +9,28 @@ import {
 const createReport = async (req, res) => {
     try {
         const data = await dbCreateReport(req.body);
-        res.status(201).json({ msg: "Reporte registrado", data });
+        return res.status(201).json({ msg: "Reporte registrado", data });
     } catch (error) {
-       console.error("Error al registrar reporte:", error);
+        console.error("Error al registrar reporte:", error);
 
-       
-       if (error.name === "ValidationError") {
+        if (error.name === "ValidationError") {
             const errors = {};
             for (const field in error.errors) {
                 errors[field] = error.errors[field].message;
+            }
+            return res.status(400).json({ success: false, errors });
+        }
 
-            }
-            res.json({errors});    
-            }
-            res.json({ msg: "Error al registrar producto"});
-        };
+        return res.status(500).json({ msg: "Error al registrar el reporte", error: error.message });
     }
-;
+};
 
 const getReports = async (req, res) => {
     try {
         const data = await dbGetReports();
-        res.status(200).json({ msg: "Lista de reportes", data });
+        return res.status(200).json({ msg: "Lista de reportes", data });
     } catch (error) {
-        res.status(500).json({
+        return res.status(500).json({
             msg: "Error al obtener reportes",
             error: error.message
         });
@@ -47,9 +45,9 @@ const getReport = async (req, res) => {
             return res.status(404).json({ msg: "Reporte no encontrado" });
         }
 
-        res.status(200).json({ msg: "Reporte encontrado", data });
+        return res.status(200).json({ msg: "Reporte encontrado", data });
     } catch (error) {
-        res.status(500).json({
+        return res.status(500).json({
             msg: "Error al obtener el reporte",
             error: error.message
         });
@@ -64,9 +62,9 @@ const updateReport = async (req, res) => {
             return res.status(404).json({ msg: "Reporte no encontrado" });
         }
 
-        res.status(200).json({ msg: "Reporte actualizado", data });
+        return res.status(200).json({ msg: "Reporte actualizado", data });
     } catch (error) {
-        res.status(500).json({
+        return res.status(500).json({
             msg: "Error al actualizar el reporte",
             error: error.message
         });
@@ -81,9 +79,9 @@ const deleteReport = async (req, res) => {
             return res.status(404).json({ msg: "Reporte no encontrado" });
         }
 
-        res.status(200).json({ msg: "Reporte eliminado", data });
+        return res.status(200).json({ msg: "Reporte eliminado", data });
     } catch (error) {
-        res.status(500).json({
+        return res.status(500).json({
             msg: "Error al eliminar el reporte",
             error: error.message
         });
