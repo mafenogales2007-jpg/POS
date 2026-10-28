@@ -2,7 +2,8 @@ import express from 'express';
 import 'dotenv/config';
 import cors from 'cors';
 import productosRouter from './routers/productos.routers.js';
-import inventarioRouter from './routers/inventario.routers.js'; // 1. Importa el router de inventario
+import inventarioRouter from './routers/inventario.routers.js'; 
+import categoriaRouter from './routers/categorias.routers.js';
 import conexion from './config/mongo.config.js';
 
 const PORT = process.env.PORT || 3001;
@@ -19,7 +20,8 @@ app.get('/health', (req, res) => {
 
 // 2. Enlaza las rutas
 app.use('/api/productos', productosRouter);
-app.use('/api/inventario', inventarioRouter); // Ruta base para el inventario
+app.use('/api/inventario', inventarioRouter);
+app.use('/api/categorias', categoriaRouter);
 
 app.use((req, res, next) => {
     res.status(404).json({
