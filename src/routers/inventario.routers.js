@@ -1,10 +1,11 @@
 import { Router } from 'express';
-// Aquí puedes importar las funciones de tu controlador de inventario
+import { inventarioController } from '../controllers/inventario.controller.js';
+
 const router = Router();
 
-// Ejemplo de ruta de inventario
-router.get('/', (req, res) => {
-    res.status(200).json({ success: true, message: 'Ruta de inventario activa' });
-});
+router.get('/', inventarioController.listarInventario);
+router.get('/stock-bajo', inventarioController.listarStockBajo);
+router.get('/movimientos', inventarioController.listarMovimientos); 
+router.put('/:id/stock', inventarioController.ajustarStock);
 
 export default router;
