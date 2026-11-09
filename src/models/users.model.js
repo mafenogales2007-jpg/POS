@@ -1,39 +1,75 @@
-import mongoose from "mongoose";
+import { Schema, model } from 'mongoose';
 
-// Parte 1 : definir la estructura de datos de mi documento 
-const UserSchema = new mongoose.Schema({
-    name: {
-        type: String,                //tipo dato
-        required: true,              // Regla: Es obligatorio
-        trim: true                   //modificador
+export const ROLES_USUARIO = ['ADMIN', 'CAJERO'];
+
+const usersSchema = new Schema(
+  {
+    documentoUsuario: {
+      type: String,
+      required: [true, 'El número de documento es obligatorio'],
+      unique: true,
+      trim: true
     },
-    email: {
-        type: String,
-        required: true,
-        trim: true 
+    tipoDocumento: {
+      type: Schema.Types.ObjectId,
+      ref: 'TipoDocumento',
+      required: [true, 'El tipo de documento es obligatorio']
     },
-    password: {
-        type: String,
-        trim: true,
-        required: true 
+    nombreUsuario: {
+      type: String,
+      required: [true, 'El nombre es obligatorio'],
+      trim: true
     },
-    role: {
-        type: String,
-        enum: ['ADMIN', 'SELLER'],
-        default: 'SELLER'
+    apellidoUsuario: {
+      type: String,
+      required: [true, 'El apellido es obligatorio'],
+      trim: true
     },
-    status: {
-        type: Boolean,
-        default: true
+    emailUsuario: {
+      type: String,
+      required: [true, 'El correo electrónico es obligatorio'],
+      unique: true,
+      lowercase: true,
+      trim: true
+    },
+    claveUsuario: {
+      type: String,
+      required: [true, 'La contraseña es obligatoria']
+    },
+    rol: {
+      type: String,
+      enum: {
+        values: ROLES_USUARIO,
+        message: '{VALUE} no es un rol permitido (ADMIN o CAJERO)'
+      },
+      default: 'CAJERO',
+      required: true
+    },
+    telefonoUsuario: {
+      type: String,
+      trim: true
+    },
+    direccionUsuario: {
+      type: String,
+      trim: true
+    },
+    estadoUsuario: {
+      type: Boolean,
+      default: true
     }
-},{
-    timestamps: true       //Crear automaticamente createAT, uPDATEAT
-});
-
-// Parte 2 : definir el modelo. Dicho modelo esta atado al nombre del documento
-const UserModel = mongoose.model(
-    'user',          //Nombre de la coleccion (pluralizar automaticamente)
-    UserSchema       // Nombre del esquema que define la estructura de datos
+  },
+  {
+    timestamps: true,
+    versionKey: false
+  }
 );
 
-export default UserModel;
+// Ocultar la contraseña al serializar en JSON
+usersSchema.methods.toJSON = function () {
+  const usuario = this.toObject();
+  delete usuario.claveUsuario;
+  return usuario;
+};
+
+export const UsersModel = model('Usuario', usersSchema);
+export default UsersModel;

@@ -1,24 +1,29 @@
-// const express = require('express');   // CommonJS
-import express from 'express';           // ESModule
-
-import usersRouter from './rourtes/users.rourtes.js';
+import express from 'express';
+import corsMiddleware from './middlewares/cors.middleware.js';
+import tipoDocumentoRouter from './routers/tipoDocumento.routers.js';
+import usersRouter from './routers/users.routers.js';
+import terceroRouter from './routers/tercero.routers.js';
 import conexion from './config/mongo.config.js';
 
-const app = express();    // Instancia de express
-conexion(); //ejecuta la conexion a la base de datos 
+const app = express();
+conexion(); // Conexión a MongoDB Atlas
 
-app.use(express.json());  // habilita a la aplicacion para interpretar JSON   
+// Middlewares globales
+app.use(corsMiddleware); // Habilita CORS para React y otros clientes
+app.use(express.json());  // Habilita parseo de JSON en body
 
-// Definiendo 1 endpoint (ruta de entrada)
+// Endpoint de salud
 app.get('/health', (req, res) => {
-    res.json({ msg: 'Servidor de SenaStore Funcionando!' });
+    res.json({ success: true, message: 'Servidor POS Funcionando Correctamente' });
 });
 
-//Enlazar todas las rutas
+// Rutas de la API (Camino B)
+app.use('/api/tipos-documento', tipoDocumentoRouter);
 app.use('/api/users', usersRouter);
+app.use('/api/terceros', terceroRouter);
 
 // Iniciar el servidor
-const port = 3000;
-app.listen(port, () => {
-    console.log(`Servidor corriendo en http://localhost:${port}`);
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`🚀 Servidor POS corriendo en http://localhost:${PORT}`);
 });

@@ -1,30 +1,42 @@
-// allowed roles: Roles permitidos ['ADMIN']
+/**
+ * Middleware para autorizar roles específicos (ej. ADMIN, CAJERO)
+ * Compatible con la estructura en capas y estándar de respuestas del POS.
+ */
+const authorizationMiddleware = (allowedRoles) => {
+  return (req, res, next) => {
+    // Extraer el usuario inyectado por authMiddleware
+    const usuario = req.usuario || req.userFound;
 
-const authorizationMiddleware = ( allowedRoles ) => {
-
-    return ( req, res, next ) => {
-        // Paso 1: Extraer el rol del usuario del payload del token que valida el Middleware de Autenticacion
-        const role = req.userFound.role;
-    
-        if ( ! role ) {
-            return res.status(403).json({ msg: 'Error: El usuario autenticado no tiene rol definido' });
-        }
-
-        // Paso 2: Verificar si el rol del usuario se encuentra en lista de roles permitidos... para esta ruta
-        if( ! allowedRoles.includes( role ) ) {
-            return res.status(403).json({
-                msg: `Error: el rol ${ role } no esta autorizado para realizar esta accion`
-            });
-        }
-        
-        console.log(`Usuario autorizado con rol ${role}`);
-
-        next();
+    if (!usuario) {
+      return res.status(401).json({
+        success: false,
+        message: 'No hay usuario autenticado en la petición'
+      });
     }
 
-}
+    const role = usuario.rol;
 
+    if (!role) {
+      return res.status(403).json({
+        success: false,
+        message: 'Error: El usuario autenticado no tiene rol asignado'
+      });
+    }
 
-export {
-    authorizationMiddleware
-}
+    // Convertir a arreglo si se pasa un string único
+    const rolesArray = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
+
+    // Verificar si el rol está permitido
+    if (!rolesArray.includes(role)) {
+      return res.status(403).json({
+        success: false,
+        message: `Acceso denegado: el rol '${role}' no está autorizado para realizar esta acción`
+      });
+    }
+
+    next();
+  };
+};
+
+export { authorizationMiddleware };
+export default authorizationMiddleware;

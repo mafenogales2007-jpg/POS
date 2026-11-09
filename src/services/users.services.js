@@ -1,90 +1,123 @@
-import UserModel from "../models/user.model.js";
+import { UsersModel } from '../models/users.model.js';
+import { hashPassword, comparePassword } from '../helpers/bcrypt.helpers.js';
+import { generateToken } from '../helpers/jwt.helpers.js';
 
-const dbCreateUser = async ( newUser ) => {
-    return await UserModel.create( newUser );  // Registrar en la BD
-}
+/**
+ * Autenticación de operadores (Login) y emisión de JWT
+ */
+export const loginService = async ({ identificador, clave }) => {
+  if (!identificador || !clave) {
+    throw new Error('Debe proporcionar el identificador (email o documento) y la contraseña');
+  }
 
-// Obtener la lista de usuarios con paginación y filtro de estado (activos, inactivos o todos)
-const dbGetUsers = async ( page = 1, limit = 10, status = 'true' ) => {
-    // Paso 1: Sanitizar los valores de paginación (números enteros >= 1)
-    const pageNumber = Math.max( 1, Number( page ) || 1 );
-    const limitNumber = Math.max( 1, Number( limit ) || 10 );
+  // Buscar por email o por documento
+  const usuario = await UsersModel.findOne({
+    $or: [
+      { emailUsuario: identificador.toLowerCase().trim() },
+      { documentoUsuario: identificador.trim() }
+    ]
+  }).populate('tipoDocumento');
 
-    // Paso 2: Calcular el desplazamiento o salto de registros (skip)
-    // Fórmula: (página - 1) * límite
-    const skip = ( pageNumber - 1 ) * limitNumber;
+  if (!usuario) {
+    throw new Error('Credenciales incorrectas: usuario no encontrado');
+  }
 
-    // Paso 3: Construir el filtro dinámico según el query param 'status'
-    //   - status === 'true'  -> solo usuarios activos ({ status: true })
-    //   - status === 'false' -> solo usuarios inactivos ({ status: false })
-    //   - status === 'all'   -> todos sin distingo de status ({})
-    //   - por defecto        -> solo usuarios activos ({ status: true })
-    let filter = {};
+  if (!usuario.estadoUsuario) {
+    throw new Error('Usuario inactivo o suspendido en el sistema');
+  }
 
-    if ( status === 'true' || status === true ) {
-        filter.status = true;
-    } else if ( status === 'false' || status === false ) {
-        filter.status = false;
-    } else if ( status === 'all' ) {
-        filter = {}; // Objeto vacío: no filtra por status (trae todos)
-    } else {
-        filter.status = true; // Valor por defecto
+  const claveCorrecta = comparePassword(clave, usuario.claveUsuario);
+  if (!claveCorrecta) {
+    throw new Error('Credenciales incorrectas: contraseña inválida');
+  }
+
+  const token = generateToken({
+    id: usuario._id,
+    nombre: usuario.nombreUsuario,
+    apellido: usuario.apellidoUsuario,
+    email: usuario.emailUsuario,
+    rol: usuario.rol
+  });
+
+  return {
+    token,
+    usuario: {
+      id: usuario._id,
+      documentoUsuario: usuario.documentoUsuario,
+      tipoDocumento: usuario.tipoDocumento,
+      nombreUsuario: usuario.nombreUsuario,
+      apellidoUsuario: usuario.apellidoUsuario,
+      emailUsuario: usuario.emailUsuario,
+      rol: usuario.rol
     }
+  };
+};
 
-    // Paso 4: Ejecutar en paralelo la consulta paginada y el conteo total con el mismo filtro
-    const [ users, total ] = await Promise.all([
-        // 4.1: Consulta los documentos aplicando el filtro, skip (saltar) y limit (cantidad máxima)
-        UserModel.find( filter )
-            .skip( skip )
-            .limit( limitNumber )
-            .populate('createdBy'),
+/**
+ * Registro de un nuevo operador (Exclusivo ADMIN - RF-02)
+ */
+export const registrarUsuarioService = async (datosUsuario) => {
+  const {
+    documentoUsuario,
+    tipoDocumento,
+    nombreUsuario,
+    apellidoUsuario,
+    emailUsuario,
+    claveUsuario,
+    rol,
+    telefonoUsuario,
+    direccionUsuario
+  } = datosUsuario;
 
-        // 4.2: Cuenta el total de documentos que coinciden exactamente con el filtro aplicado
-        UserModel.countDocuments( filter )
-    ]);
+  const existente = await UsersModel.findOne({
+    $or: [
+      { emailUsuario: emailUsuario.toLowerCase().trim() },
+      { documentoUsuario: documentoUsuario.trim() }
+    ]
+  });
 
-    // Paso 5: Retornar los datos obtenidos junto con la metadata de paginación y filtro
-    return {
-        users,                                        // Lista de usuarios correspondientes a la página actual
-        total,                                        // Total de usuarios que coinciden con el filtro
-        page: pageNumber,                             // Número de página consultada
-        limit: limitNumber,                           // Cantidad de registros devueltos por página
-        totalPages: Math.ceil( total / limitNumber ) // Total de páginas disponibles
-    };
-}
+  if (existente) {
+    throw new Error('Ya existe un usuario registrado con ese correo o número de documento');
+  }
 
-const dbDeleteUser = async ( id ) => {
-    // return await UserModel.findByIdAndDelete( id );
-    return await UserModel.findOneAndDelete({ _id: id });
-}
+  const passwordHashed = hashPassword(claveUsuario);
 
-const dbUpdateUser = async ( id, userUpdated ) => {
-    return await UserModel.findOneAndUpdate(
-        { _id: id },            // Objeto de consulta para buscar el documento que deseamos actualizar
-        userUpdated,            // El objeto con los datos del Documento que deseamos actualizar
-        {
-            new: true,          // Retorna el documento ya actualizado
-            runValidators: true // Ejecuta las validaciones definidas en el Schema de Mongoose al actualizar
-        }
-    );
-}
+  const nuevoUsuario = new UsersModel({
+    documentoUsuario,
+    tipoDocumento,
+    nombreUsuario,
+    apellidoUsuario,
+    emailUsuario,
+    claveUsuario: passwordHashed,
+    rol: rol || 'CAJERO',
+    telefonoUsuario,
+    direccionUsuario
+  });
 
-const dbGetUser = async ( id ) => {
-    // return await UserModel.findById( id );       // Obtiene un usuario por su ID
-    return await UserModel.findOne({ _id: id });
-}
+  const usuarioGuardado = await nuevoUsuario.save();
+  return await UsersModel.findById(usuarioGuardado._id).populate('tipoDocumento');
+};
 
-// email: jcarlosj@correo.co
-const dbGetUserByEmail = async ( email, status = true ) => {
-    return await UserModel.findOne({ email: email, status: status });
-}
+/**
+ * Listar operadores del POS (Exclusivo ADMIN - RF-02)
+ */
+export const listarUsuariosService = async () => {
+  return await UsersModel.find().populate('tipoDocumento').lean();
+};
 
+/**
+ * Desactivar / Activar operador (RF-02)
+ */
+export const cambiarEstadoUsuarioService = async (id, estado) => {
+  const usuario = await UsersModel.findByIdAndUpdate(
+    id,
+    { estadoUsuario: estado },
+    { new: true }
+  ).populate('tipoDocumento');
 
-export {
-    dbCreateUser,
-    dbGetUsers,
-    dbDeleteUser,
-    dbUpdateUser,
-    dbGetUser,
-    dbGetUserByEmail
-}
+  if (!usuario) {
+    throw new Error('Operador no encontrado');
+  }
+
+  return usuario;
+};

@@ -1,58 +1,71 @@
-import { generateToken, validateToken } from "../helpers/jwt.helpers.js";
-import { dbGetUserByEmail } from "../services/users.services.js";
+import { verificarJWT } from '../helpers/auth.helpers.js';
+import { UsersModel } from '../models/users.model.js';
 
-const authMiddleware = async ( req, res, next ) => {
-    // Paso 1: Obtener el Token de la cabecera
-    const token = req.header( 'X-Token' );
+/**
+ * Middleware de Autenticación de Operadores
+ * Cumple con RNF-03 y el estándar de respuestas HTTP del proyecto.
+ * 
+ * Soporta el estándar industrial 'Authorization: Bearer <token>' (utilizado por React 19)
+ * y de forma retrocompatible 'X-Token'.
+ */
+const authMiddleware = async (req, res, next) => {
+  try {
+    // Paso 1: Obtener el token de la cabecera (Bearer o X-Token)
+    let token = req.header('Authorization') || req.header('X-Token');
 
-    const msg = 'Hola soy el Middleware de Autenticacion';
-    console.log( 'token: ', token );
-
-    // (2.1) Verifica que haya recibido una cadena 
-    if( ! token ) {
-        res.status( 401 ).json({
-            msg: 'Cadena de token vacia'
-        });
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: 'Acceso no autorizado: No se proporcionó token de sesión'
+      });
     }
 
-    // (2.2) Divide la cadena en partes usando el (.) punto como referencia
-    const tokenParts = token.split( '.' );
-    // console.log( 'Token Parts: ', tokenParts );
-    
-    // (2.3) Verificar que la cadena tenga 3 partes separadas por puntos (Forma base de un Token)
-    if( tokenParts.length !== 3 ) {
-        res.json({
-            msg: 'Formato del token no es valido'
-        });
+    // Si viene en formato Bearer <token>, extraemos solo el hash
+    if (token.startsWith('Bearer ')) {
+      token = token.slice(7).trim();
     }
 
-    // (2.4) Verificar la autenticidad del token (si fue generado por jwt de esta aplicacion)
-    const payload = validateToken(token);
-
-    if( ! payload ) {
-        res.json({
-            msg: 'Token invalido o inactivo'
-        });
+    // Paso 2: Validar formato base de un JWT (3 partes separadas por puntos)
+    const tokenParts = token.split('.');
+    if (tokenParts.length !== 3) {
+      return res.status(401).json({
+        success: false,
+        message: 'Formato del token no es válido'
+      });
     }
 
-    console.log( 'payload (middleware): ', payload );
+    // Paso 3: Verificar firma y expiración del JWT
+    const payload = verificarJWT(token);
 
-    // Paso 3: Verificar que el usuario exista en la base de datos (si el usuario fue eliminado o su estado es false es decir esa inactivo, el token ya no es valido)
-    const userFound = await dbGetUserByEmail( payload.email );
-
-    if( ! userFound ) {
-        res.json({
-            msg: 'El usuario deshabilitado o no registrado. No es posible generar token'
-        });
+    if (!payload) {
+      return res.status(401).json({
+        success: false,
+        message: 'Token inválido o expirado. Inicie sesión nuevamente.'
+      });
     }
 
-    req.userFound = userFound;   // Guardar el usuario encontrado en la request para que pueda ser usado en los controladores
+    // Paso 4: Validar existencia y vigencia del usuario en la base de datos
+    const userFound = await UsersModel.findById(payload.id).populate('tipoDocumento');
 
-    console.log( 'userFound', userFound );
+    if (!userFound || !userFound.estadoUsuario) {
+      return res.status(403).json({
+        success: false,
+        message: 'El operador está deshabilitado o no existe en el sistema'
+      });
+    }
+
+    // Guardar el usuario en req para disponibilidad en controladores y middlewares de autorización
+    req.usuario = userFound;
+    req.userFound = userFound;
 
     next();
-}
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Error al procesar la autenticación: ' + error.message
+    });
+  }
+};
 
-export {
-    authMiddleware
-}
+export { authMiddleware };
+export default authMiddleware;
