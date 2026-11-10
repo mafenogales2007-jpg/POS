@@ -5,7 +5,7 @@ const URL_REMOTE = process.env.MONGODB_URI;
 const conexion = async () => {
     try {
         if (!URL_REMOTE) {
-            throw new Error("La variable URI_MONGO no está definida en el archivo .env");
+            throw new Error("La variable MONGODB_URI no está definida en el archivo .env");
         }
         await mongoose.connect(URL_REMOTE);
         console.log("Conectado exitosamente a la base de datos remota de MongoDB Atlas");

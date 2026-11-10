@@ -22,6 +22,23 @@ app.use('/api/tipos-documento', tipoDocumentoRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/terceros', terceroRouter);
 
+// Manejo de rutas no encontradas (404)
+app.use((req, res) => {
+    res.status(404).json({
+        success: false,
+        message: `Ruta no encontrada: ${req.method} ${req.originalUrl}`
+    });
+});
+
+// Middleware global para captura de errores imprevistos (500)
+app.use((err, req, res, next) => {
+    console.error('Error no controlado:', err);
+    res.status(err.status || 500).json({
+        success: false,
+        message: err.message || 'Error interno del servidor'
+    });
+});
+
 // Iniciar el servidor
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

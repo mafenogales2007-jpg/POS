@@ -4,6 +4,7 @@ import {
   listarUsuariosService,
   cambiarEstadoUsuarioService
 } from '../services/users.services.js';
+import { handleMongooseError } from '../helpers/handle-mongoose-error.helper.js';
 
 /**
  * Endpoint POST /api/auth/login
@@ -41,10 +42,8 @@ export const registerUserController = async (req, res) => {
       data: nuevoUsuario
     });
   } catch (error) {
-    return res.status(400).json({
-      success: false,
-      message: error.message || 'Error al registrar el operador'
-    });
+    const errorParsed = handleMongooseError(error);
+    return res.status(errorParsed.status).json(errorParsed.response);
   }
 };
 
@@ -60,10 +59,8 @@ export const listUsersController = async (req, res) => {
       data: usuarios
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message || 'Error al obtener los operadores'
-    });
+    const errorParsed = handleMongooseError(error);
+    return res.status(errorParsed.status).json(errorParsed.response);
   }
 };
 
@@ -82,10 +79,8 @@ export const changeUserStatusController = async (req, res) => {
       data: usuarioActualizado
     });
   } catch (error) {
-    return res.status(400).json({
-      success: false,
-      message: error.message || 'Error al actualizar el estado del operador'
-    });
+    const errorParsed = handleMongooseError(error);
+    return res.status(errorParsed.status).json(errorParsed.response);
   }
 };
 

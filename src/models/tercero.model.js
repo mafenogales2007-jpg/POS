@@ -64,5 +64,5 @@ const terceroSchema = new Schema(
   }
 );
 
-export const TerceroModel = model('Tercero', terceroSchema);
+export const TerceroModel = model('Tercero', terceroSchema, 'terceros');
 export default TerceroModel;

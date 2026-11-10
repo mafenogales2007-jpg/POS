@@ -3,6 +3,7 @@ import {
   obtenerTipoDocumentoPorIdService,
   crearTipoDocumentoService
 } from '../services/tipoDocumento.services.js';
+import { handleMongooseError } from '../helpers/handle-mongoose-error.helper.js';
 
 /**
  * Controlador para listar todos los tipos de documento
@@ -16,10 +17,8 @@ export const obtenerTiposDocumentoController = async (req, res) => {
       data: tipos
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message || 'Error al obtener los tipos de documento'
-    });
+    const errorParsed = handleMongooseError(error);
+    return res.status(errorParsed.status).json(errorParsed.response);
   }
 };
 
@@ -44,10 +43,8 @@ export const obtenerTipoDocumentoPorIdController = async (req, res) => {
       data: tipo
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message || 'Error al consultar el tipo de documento'
-    });
+    const errorParsed = handleMongooseError(error);
+    return res.status(errorParsed.status).json(errorParsed.response);
   }
 };
 
@@ -73,9 +70,7 @@ export const crearTipoDocumentoController = async (req, res) => {
       data: nuevoTipo
     });
   } catch (error) {
-    return res.status(400).json({
-      success: false,
-      message: error.message || 'Error al registrar el tipo de documento'
-    });
+    const errorParsed = handleMongooseError(error);
+    return res.status(errorParsed.status).json(errorParsed.response);
   }
 };

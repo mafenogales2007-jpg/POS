@@ -4,8 +4,9 @@
  * puedan consumir la API REST sin ser bloqueados por las políticas de seguridad del navegador.
  */
 export const corsMiddleware = (req, res, next) => {
-  // 1. Permitir cualquier origen de origen en desarrollo (o configurar orígenes permitidos)
-  res.header('Access-Control-Allow-Origin', '*');
+  // 1. Permitir origen configurable vía variable de entorno o todos en desarrollo
+  const allowedOrigin = process.env.CLIENT_URL || '*';
+  res.header('Access-Control-Allow-Origin', allowedOrigin);
 
   // 2. Métodos HTTP permitidos en la API
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');

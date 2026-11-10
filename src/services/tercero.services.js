@@ -56,9 +56,10 @@ export const listarTercerosService = async (filtros = {}) => {
     query.estadoTercero = filtros.estado === 'true' || filtros.estado === true;
   }
 
-  // Búsqueda textual rápida por documento o nombre/razón social
+  // Búsqueda textual rápida por documento o nombre/razón social (con escape de caracteres especiales)
   if (filtros.busqueda) {
-    const regex = new RegExp(filtros.busqueda.trim(), 'i');
+    const escapedSearch = filtros.busqueda.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(escapedSearch, 'i');
     query.$or = [{ documentoTercero: regex }, { nombreOrazonSocial: regex }];
   }
 

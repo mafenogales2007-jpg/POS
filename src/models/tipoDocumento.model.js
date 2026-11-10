@@ -23,4 +23,4 @@ const tipoDocumentoSchema = new Schema(
   }
 );
 
-export const TipoDocumentoModel = model('TipoDocumento', tipoDocumentoSchema);
+export const TipoDocumentoModel = model('TipoDocumento', tipoDocumentoSchema, 'tipodocumentos');
