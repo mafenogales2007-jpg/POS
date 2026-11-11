@@ -3,6 +3,8 @@ import corsMiddleware from './middlewares/cors.middleware.js';
 import tipoDocumentoRouter from './routers/tipoDocumento.routers.js';
 import usersRouter from './routers/users.routers.js';
 import terceroRouter from './routers/tercero.routers.js';
+import passwordRouter from './routers/encriptar.routers.js';
+
 import conexion from './config/mongo.config.js';
 
 const app = express();
@@ -21,6 +23,7 @@ app.get('/health', (req, res) => {
 app.use('/api/tipos-documento', tipoDocumentoRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/terceros', terceroRouter);
+app.use('/api/password', passwordRouter );
 
 // Manejo de rutas no encontradas (404)
 app.use((req, res) => {

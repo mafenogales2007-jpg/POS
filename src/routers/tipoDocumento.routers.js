@@ -4,11 +4,12 @@ import {
   obtenerTipoDocumentoPorIdController,
   crearTipoDocumentoController
 } from '../controllers/tipoDocumento.controllers.js';
+import { autenticarToken, autorizarRoles} from '../middlewares/auth.middleware.js';
 
 const router = Router();
 
 // Rutas de consulta (accesibles para poblar listas desplegables en formularios de registro)
-router.get('/', obtenerTiposDocumentoController);
+router.get('/', autenticarToken, autorizarRoles(['ADMIN']), obtenerTiposDocumentoController);
 router.get('/:id', obtenerTipoDocumentoPorIdController);
 
 // Ruta de creación (restringida funcionalmente según el plan)

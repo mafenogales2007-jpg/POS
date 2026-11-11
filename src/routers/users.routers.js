@@ -10,14 +10,7 @@ import { autenticarToken, autorizarRoles } from '../middlewares/auth.middleware.
 
 const router = Router();
 
-// ================= Rutas Públicas de Autenticación =================
-router.post('/login', loginController);
-
-// ================= Rutas Protegidas (Cualquier Operador Autenticado) =================
-router.get('/perfil', autenticarToken, getProfileController);
-
-// ================= Rutas de Creación y Consulta de Usuarios =================
-// Si no hay usuarios en la BD, permite registrar el primer ADMIN sin pedir token inicial
+router.get('/', autenticarToken, autorizarRoles('ADMIN'), listUsersController);
 router.post('/', async (req, res, next) => {
   const { UsersModel } = await import('../models/users.model.js');
   const count = await UsersModel.countDocuments();
@@ -28,7 +21,16 @@ router.post('/', async (req, res, next) => {
     autorizarRoles('ADMIN')(req, res, next);
   });
 }, registerUserController);
-router.get('/', autenticarToken, autorizarRoles('ADMIN'), listUsersController);
+
+// ================= Rutas Públicas de Autenticación =================
+router.post('/login', loginController);
+
+// ================= Rutas Protegidas (Cualquier Operador Autenticado) =================
+router.get('/perfil', autenticarToken, getProfileController);
+// ================= Rutas de Creación y Consulta de Usuarios =================
+// Si no hay usuarios en la BD, permite registrar el primer ADMIN sin pedir token inicial
+
 router.patch('/:id/estado', autenticarToken, autorizarRoles('ADMIN'), changeUserStatusController);
+
 
 export default router;

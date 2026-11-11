@@ -55,8 +55,15 @@ export const autenticarToken = async (req, res, next) => {
  * Middleware para autorizar roles específicos (ej. autorizarRoles('ADMIN'))
  * Cumple con RF-01 y RF-02
  */
-export const autorizarRoles = (...rolesPermitidos) => {
+export const autorizarRoles = (rolesPermitidos = []) => {
   return (req, res, next) => {
+    if( rolesPermitidos.length == 0 ) {
+      return res.status(401).json({
+        success: false,
+        message: 'La ruta no tiene definidos los roles permitidos'
+      });
+    }
+
     if (!req.usuario) {
       return res.status(401).json({
         success: false,
