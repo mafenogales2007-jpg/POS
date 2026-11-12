@@ -1,7 +1,5 @@
 
 import express from 'express';
-import 'dotenv/config';
-
 import conexion from './config/mongo.config.js';
 
 // Middleware global
