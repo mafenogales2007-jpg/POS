@@ -1,0 +1,232 @@
+{
+  "info": {
+    "_postman_id": "pos-api-inventario-juan-trimestre-5",
+    "name": "POS API - Módulo Catálogo e Inventario (Juan)",
+    "description": "Colección completa de pruebas y documentación de la API REST para el módulo de Categorías, Productos con SKU indexado y Control de Stock con Alertas de Abastecimiento según la Arquitectura Camino B y el Plan de Trabajo Full-Stack.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000/api",
+      "type": "string"
+    },
+    {
+      "key": "token_admin",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "token_cajero",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "categoria_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "producto_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "sku_test",
+      "value": "SKU-BEB-001",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01. Catálogo de Categorías (HU-04 / RF-04)",
+      "description": "Clasificación de artículos mediante categorías comerciales.",
+      "item": [
+        {
+          "name": "Crear Categoría (Solo ADMIN)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.success && json.data && json.data._id) {",
+                  "    pm.collectionVariables.set('categoria_id', json.data._id);",
+                  "    console.log('Categoría guardada:', json.data._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombreCategoria\": \"Bebidas y Refrescos\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/categorias",
+              "host": ["{{base_url}}"],
+              "path": ["categorias"]
+            },
+            "description": "HU-04: Registra una nueva categoría comercial (exclusivo para ADMIN)."
+          }
+        },
+        {
+          "name": "Listar Categorías",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_cajero}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/categorias",
+              "host": ["{{base_url}}"],
+              "path": ["categorias"]
+            },
+            "description": "Obtiene la lista de todas las categorías activas."
+          }
+        }
+      ]
+    },
+    {
+      "name": "02. Catálogo de Productos con SKU (HU-05 / RF-04 / RNF-01)",
+      "description": "Búsqueda en tiempo real por SKU indexado (< 2s) y vinculación 1:1 con StockModel.",
+      "item": [
+        {
+          "name": "Crear Producto con Stock Inicial (Solo ADMIN)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.success && json.data && json.data._id) {",
+                  "    pm.collectionVariables.set('producto_id', json.data._id);",
+                  "    console.log('Producto guardado:', json.data._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sku\": \"{{sku_test}}\",\n  \"nombreProductos\": \"Gaseosa Colombiana 1.5L\",\n  \"descripcionProductos\": \"Bebida gaseosa tradicional presentación familiar\",\n  \"precioVenta\": 5500,\n  \"ivaProductos\": 19,\n  \"categoria\": \"{{categoria_id}}\",\n  \"totalStock\": 4,\n  \"stockMinimo\": 5\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/productos",
+              "host": ["{{base_url}}"],
+              "path": ["productos"]
+            },
+            "description": "HU-05: Registra el producto en ProductosModel y vincula 1:1 su registro en StockModel."
+          }
+        },
+        {
+          "name": "Listar Catálogo de Productos con Stock",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_cajero}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/productos",
+              "host": ["{{base_url}}"],
+              "path": ["productos"]
+            },
+            "description": "Obtiene los productos con sus existencias y bandera de stockCritico."
+          }
+        },
+        {
+          "name": "Buscar Producto por SKU (< 2s RNF-01)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_cajero}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/productos/sku/{{sku_test}}",
+              "host": ["{{base_url}}"],
+              "path": ["productos", "sku", "{{sku_test}}"]
+            },
+            "description": "HU-05: Búsqueda rápida por código de barras / SKU indexado para cobro inmediato en caja."
+          }
+        }
+      ]
+    },
+    {
+      "name": "03. Control y Alertas de Stock (HU-06 / RF-05 / RF-06)",
+      "description": "Supervisión de existencias y alertas automáticas de reabastecimiento crítico.",
+      "item": [
+        {
+          "name": "Consultar Alertas de Stock Crítico (totalStock <= stockMinimo)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_cajero}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/stock/alertas",
+              "host": ["{{base_url}}"],
+              "path": ["stock", "alertas"]
+            },
+            "description": "RF-06: Retorna productos cuyas existencias están en nivel crítico o agotadas para alimentar las alertas visuales en React 19."
+          }
+        },
+        {
+          "name": "Consultar Stock de Producto por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_cajero}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/stock/producto/{{producto_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["stock", "producto", "{{producto_id}}"]
+            },
+            "description": "Obtiene la relación 1:1 de existencias de un producto."
+          }
+        }
+      ]
+    }
+  ]
+}

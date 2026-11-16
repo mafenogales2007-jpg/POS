@@ -1,58 +1,79 @@
-import { obtenerStockBajoService } from '../services/productos.services.js';
-import { obtenerProductosService, crearProductoService, actualizarStockService, eliminarProductoService } from '../services/productos.services.js';
+import { productosService } from '../services/productos.services.js';
+import { handleMongooseError } from '../helpers/handle-mongoose-error.helper.js';
 
-export const listarProductos = async (req, res, next) => {
+export const createProducto = async (req, res) => {
     try {
-        const productos = await obtenerProductosService();
-        res.status(200).json({ success: true, data: productos });
-    } catch (error) {
-        next(error);
-    }
-};
-
-export const crearProducto = async (req, res, next) => {
-    try {
-        const producto = await crearProductoService(req.body);
-        res.status(201).json({ success: true, message: 'Producto registrado exitosamente', data: producto });
-    } catch (error) {
-        next(error);
-    }
-};
-
-export const modificarStock = async (req, res, next) => {
-    try {
-        const { id } = req.params;
-        const { stock } = req.body;
-        const producto = await actualizarStockService(id, stock);
-        res.status(200).json({ success: true, message: 'Stock actualizado correctamente', data: producto });
-    } catch (error) {
-        next(error);
-    }
-};
-
-export const eliminarProducto = async (req, res, next) => {
-    try {
-        const { id } = req.params;
-        await eliminarProductoService(id);
-        res.status(200).json({ 
-            success: true, 
-            message: 'Producto eliminado correctamente del inventario' 
+        const nuevo = await productosService.crearProducto(req.body);
+        return res.status(201).json({
+            success: true,
+            message: 'Producto y existencias registradas exitosamente',
+            data: nuevo
         });
     } catch (error) {
-        next(error);
+        const errorParsed = handleMongooseError(error);
+        return res.status(errorParsed.status).json(errorParsed.response);
     }
 };
 
-export const listarStockBajo = async (req, res, next) => {
+export const getProductos = async (req, res) => {
     try {
-        const limite = req.query.limite ? Number(req.query.limite) : 5;
-        const productosBajos = await obtenerStockBajoService(limite);
-        res.status(200).json({ 
-            success: true, 
-            count: productosBajos.length,
-            data: productosBajos 
+        const productos = await productosService.obtenerProductos();
+        return res.status(200).json({
+            success: true,
+            message: 'Catálogo de productos obtenido exitosamente',
+            data: productos
         });
     } catch (error) {
-        next(error);
+        const errorParsed = handleMongooseError(error);
+        return res.status(errorParsed.status).json(errorParsed.response);
     }
+};
+
+export const getProductoBySku = async (req, res) => {
+    try {
+        const { sku } = req.params;
+        const producto = await productosService.obtenerProductoPorSku(sku);
+        if (!producto) {
+            return res.status(404).json({
+                success: false,
+                message: `Producto con SKU '${sku}' no encontrado`
+            });
+        }
+        return res.status(200).json({
+            success: true,
+            message: 'Producto obtenido exitosamente por SKU',
+            data: producto
+        });
+    } catch (error) {
+        const errorParsed = handleMongooseError(error);
+        return res.status(errorParsed.status).json(errorParsed.response);
+    }
+};
+
+export const getProductoById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const producto = await productosService.obtenerProductoPorId(id);
+        if (!producto) {
+            return res.status(404).json({
+                success: false,
+                message: `Producto con ID '${id}' no encontrado`
+            });
+        }
+        return res.status(200).json({
+            success: true,
+            message: 'Producto obtenido exitosamente',
+            data: producto
+        });
+    } catch (error) {
+        const errorParsed = handleMongooseError(error);
+        return res.status(errorParsed.status).json(errorParsed.response);
+    }
+};
+
+export default {
+    createProducto,
+    getProductos,
+    getProductoBySku,
+    getProductoById
 };

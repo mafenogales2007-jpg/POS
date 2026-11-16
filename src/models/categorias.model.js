@@ -1,18 +1,13 @@
-import mongoose from 'mongoose';
+import { Schema, model } from 'mongoose';
 
-const categoriaSchema = new mongoose.Schema({
-    nombre: { 
-        type: String, 
-        required: true, 
-        unique: true, 
-        trim: true 
-    },
-    descripcion: { 
-        type: String, 
-        trim: true 
+const categoriaSchema = new Schema({
+    nombreCategoria: {
+        type: String,
+        required: true,
+        unique: true,
+        trim: true
     }
-}, { 
-    timestamps: true 
-});
+}, { timestamps: true });
 
-export default mongoose.model('Categoria', categoriaSchema);
+export const CategoriaModel = model('Categoria', categoriaSchema);
+export default CategoriaModel;

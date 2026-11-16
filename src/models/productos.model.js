@@ -1,38 +1,44 @@
-import mongoose from 'mongoose';
+import { Schema, model } from 'mongoose';
 
-const productoSchema = new mongoose.Schema({
-    nombre: { 
-        type: String, 
-        required: true, 
-        trim: true 
+const productosSchema = new Schema({
+    sku: {
+        type: String,
+        required: true,
+        unique: true,
+        trim: true,
+        index: true
     },
-    descripcion: { 
-        type: String 
+    nombreProductos: {
+        type: String,
+        required: true,
+        trim: true
     },
-    precio: { 
-        type: Number, 
-        required: true, 
-        min: 0 
+    descripcionProductos: {
+        type: String,
+        trim: true
     },
-    stock: { 
-        type: Number, 
-        required: true, 
-        min: 0, 
-        default: 0 
+    precioVenta: {
+        type: Number,
+        required: true,
+        min: 0,
+        default: 0.00
     },
-    stockMinimo: { 
-        type: Number, 
-        required: true, 
-        min: 0, 
-        default: 5 // Límite personalizado para alertas de reabastecimiento
+    ivaProductos: {
+        type: Number,
+        default: 0.00,
+        min: 0,
+        max: 100
     },
-    categoria: { 
-        type: mongoose.Schema.Types.ObjectId, 
-        ref: 'Categoria', 
-        required: false 
+    categoria: {
+        type: Schema.Types.ObjectId,
+        ref: 'Categoria',
+        required: true
+    },
+    estadoProductos: {
+        type: Boolean,
+        default: true
     }
-}, { 
-    timestamps: true 
-});
+}, { timestamps: true });
 
-export default mongoose.model('Producto', productoSchema);
+export const ProductosModel = model('Productos', productosSchema);
+export default ProductosModel;

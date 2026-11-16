@@ -1,34 +1,29 @@
-import CategoriaModel from '../models/categorias.model.js';
+import { CategoriaModel } from '../models/categorias.model.js';
 
-class CategoriaService {
+class CategoriasService {
+    // HU-04: Crear categoría (solo ADMIN)
+    async crearCategoria(datos) {
+        const nombre = datos.nombreCategoria || datos.nombre;
+        if (!nombre) {
+            const err = new Error('El campo nombreCategoria es obligatorio');
+            err.statusCode = 400;
+            throw err;
+        }
+
+        const nueva = new CategoriaModel({ nombreCategoria: nombre.trim() });
+        return await nueva.save();
+    }
+
+    // Listar categorías
     async obtenerCategorias() {
-        try {
-            return await CategoriaModel.find().sort({ nombre: 1 });
-        } catch (error) {
-            throw new Error(`Error al obtener categorías: ${error.message}`);
-        }
+        return await CategoriaModel.find().sort({ nombreCategoria: 1 });
     }
 
-    async crearCategoria(data) {
-        try {
-            const nuevaCategoria = new CategoriaModel(data);
-            return await nuevaCategoria.save();
-        } catch (error) {
-            throw new Error(`Error al crear categoría: ${error.message}`);
-        }
-    }
-
-    async eliminarCategoria(id) {
-        try {
-            const categoriaEliminada = await CategoriaModel.findByIdAndDelete(id);
-            if (!categoriaEliminada) {
-                throw new Error('Categoría no encontrada');
-            }
-            return categoriaEliminada;
-        } catch (error) {
-            throw new Error(`Error al eliminar categoría: ${error.message}`);
-        }
+    // Obtener categoría por ID
+    async obtenerCategoriaPorId(id) {
+        return await CategoriaModel.findById(id);
     }
 }
 
-export const categoriaService = new CategoriaService();
+export const categoriasService = new CategoriasService();
+export default categoriasService;
