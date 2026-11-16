@@ -1,0 +1,240 @@
+{
+  "info": {
+    "_postman_id": "pos-api-reportes-adrian-trimestre-5",
+    "name": "POS API - Módulo Compras, Fidelización y Cierre de Caja (Adrian)",
+    "description": "Colección completa de pruebas y documentación de la API REST para el módulo de Compras a Proveedores, Fidelización de Puntos, Cierre Diario de Caja y Reportes Analíticos de Rotación según la Arquitectura Camino B y el Plan de Trabajo Full-Stack.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000/api",
+      "type": "string"
+    },
+    {
+      "key": "token_admin",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "token_cajero",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "proveedor_id",
+      "value": "654321000000000000000001",
+      "type": "string"
+    },
+    {
+      "key": "producto_id",
+      "value": "654321000000000000000002",
+      "type": "string"
+    },
+    {
+      "key": "cliente_id",
+      "value": "654321000000000000000003",
+      "type": "string"
+    },
+    {
+      "key": "compra_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01. Abastecimiento a Proveedores (HU-10 / RF-10)",
+      "description": "Ingreso de facturas de compra y aumento automático de existencias en inventario.",
+      "item": [
+        {
+          "name": "Registrar Compra y Aumentar Stock",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.success && json.data && json.data._id) {",
+                  "    pm.collectionVariables.set('compra_id', json.data._id);",
+                  "    console.log('Compra guardada automáticamente:', json.data._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"proveedor\": \"{{proveedor_id}}\",\n  \"subTotalCompras\": 500000,\n  \"ivaTotalCompras\": 95000,\n  \"totalCompras\": 595000,\n  \"items\": [\n    {\n      \"producto\": \"{{producto_id}}\",\n      \"cantidadCompra\": 20,\n      \"valorUnitarioCompra\": 25000,\n      \"subTotalCompra\": 500000,\n      \"totalCompra\": 595000\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/compras",
+              "host": ["{{base_url}}"],
+              "path": ["compras"]
+            },
+            "description": "HU-10: Registra la factura en ComprasModel, crea los registros en DetalleCompraModel y suma existencias al inventario en una transacción atómica."
+          }
+        },
+        {
+          "name": "Listar Historial de Compras",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/compras",
+              "host": ["{{base_url}}"],
+              "path": ["compras"]
+            },
+            "description": "Obtiene la lista de compras realizadas con datos del proveedor y usuario que las registró."
+          }
+        },
+        {
+          "name": "Consultar Compra por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/compras/{{compra_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["compras", "{{compra_id}}"]
+            },
+            "description": "Obtiene la factura de compra junto con su detalle de productos comprados."
+          }
+        }
+      ]
+    },
+    {
+      "name": "02. Fidelización de Puntos (HU-11 / RF-11)",
+      "description": "Consulta y redención de puntos acumulados por clientes (1 punto por cada $1.000 COP).",
+      "item": [
+        {
+          "name": "Consultar Puntos de un Cliente",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_cajero}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/puntos/{{cliente_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["puntos", "{{cliente_id}}"]
+            },
+            "description": "HU-11: Consulta el saldo actual de puntos de fidelización de un cliente por ID o número de documento."
+          }
+        },
+        {
+          "name": "Redimir Puntos en Caja",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_cajero}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clienteId\": \"{{cliente_id}}\",\n  \"puntos\": 50\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/puntos/redimir",
+              "host": ["{{base_url}}"],
+              "path": ["puntos", "redimir"]
+            },
+            "description": "HU-11: Descuenta puntos del saldo del cliente al redimirlos como descuento en la factura."
+          }
+        }
+      ]
+    },
+    {
+      "name": "03. Cierre de Caja y Arqueo (HU-12 / RF-12)",
+      "description": "Consolidación diaria de facturación agrupada por cajero y formas de pago.",
+      "item": [
+        {
+          "name": "Consultar Cierre Diario de Caja",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/caja/cierre-diario?fecha=2026-11-15",
+              "host": ["{{base_url}}"],
+              "path": ["caja", "cierre-diario"],
+              "query": [
+                {
+                  "key": "fecha",
+                  "value": "2026-11-15"
+                }
+              ]
+            },
+            "description": "RF-12: Agrupa ventas del día por operador (arqueo por cajero) y por medio de pago (Efectivo, Tarjeta, Nequi, etc.)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "04. Reportes Analíticos y Rotación (HU-12 / RF-13)",
+      "description": "Métricas de rotación de productos, artículos más vendidos y balance del POS.",
+      "item": [
+        {
+          "name": "Reporte de Rotación de Productos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/reportes/rotacion?limite=10",
+              "host": ["{{base_url}}"],
+              "path": ["reportes", "rotacion"],
+              "query": [
+                {
+                  "key": "limite",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "RF-13: Retorna el ranking de productos con mayores unidades vendidas, ingresos generados y existencias disponibles."
+          }
+        }
+      ]
+    }
+  ]
+}

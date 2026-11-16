@@ -1,11 +1,12 @@
 import mongoose from 'mongoose';
 
-const URL_REMOTE = process.env.URI_MONGO;
+// Soporta MONGODB_URI (estándar de Usuarios) o URI_MONGO (definida en el .env)
+const URL_REMOTE = process.env.MONGODB_URI || process.env.URI_MONGO;
 
 const conexion = async () => {
     try {
         if (!URL_REMOTE) {
-            throw new Error("La variable URI_MONGO no está definida en el archivo .env");
+            throw new Error("No se encontró la cadena de conexión de MongoDB en el archivo .env (defina MONGODB_URI o URI_MONGO)");
         }
         await mongoose.connect(URL_REMOTE);
         console.log("Conectado exitosamente a la base de datos remota de MongoDB Atlas");
