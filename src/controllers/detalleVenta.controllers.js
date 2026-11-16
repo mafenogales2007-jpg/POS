@@ -1,21 +1,27 @@
 import { detalleVentaService } from '../services/detalleVenta.services.js';
+import { handleMongooseError } from '../helpers/handle-mongoose-error.helper.js';
 
-const createDetalleVenta = async (req, res) => {
+export const getDetallesVenta = async (req, res) => {
     try {
-        const resultado = await detalleVentaService.crearDetalle(req.body);
-        return res.status(201).json(resultado);
+        const { ventaId } = req.query;
+        let detalles;
+        if (ventaId) {
+            detalles = await detalleVentaService.obtenerDetallesPorVenta(ventaId);
+        } else {
+            detalles = await detalleVentaService.obtenerDetalles();
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: 'Detalles de venta obtenidos exitosamente',
+            data: detalles
+        });
     } catch (error) {
-        return res.status(500).json({ success: false, message: error.message });
+        const errorParsed = handleMongooseError(error);
+        return res.status(errorParsed.status).json(errorParsed.response);
     }
 };
 
-const getDetallesVenta = async (req, res) => {
-    try {
-        const resultado = await detalleVentaService.obtenerDetalles();
-        return res.status(200).json(resultado);
-    } catch (error) {
-        return res.status(500).json({ success: false, message: error.message });
-    }
+export default {
+    getDetallesVenta
 };
-
-export { createDetalleVenta, getDetallesVenta };

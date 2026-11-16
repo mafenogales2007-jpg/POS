@@ -1,9 +1,10 @@
 import { Router } from 'express';
-import { createDetalleVenta, getDetallesVenta } from '../controllers/detalleVenta.controllers.js';
+import { getDetallesVenta } from '../controllers/detalleVenta.controllers.js';
+import { autenticarToken } from '../middlewares/auth.middleware.js';
 
 const router = Router();
 
-router.get('/', getDetallesVenta);
-router.post('/', createDetalleVenta);
+// Consulta de detalles de venta protegida
+router.get('/', autenticarToken, getDetallesVenta);
 
 export default router;

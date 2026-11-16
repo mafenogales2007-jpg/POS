@@ -3,26 +3,39 @@ import { Schema, model } from 'mongoose';
 const detalleVentaSchema = new Schema({
     venta: {
         type: Schema.Types.ObjectId,
-        ref: 'Venta',
+        ref: 'Ventas',
         required: true
     },
     producto: {
         type: Schema.Types.ObjectId,
-        ref: 'Producto',
+        ref: 'Productos',
         required: true
     },
-    cantidad: {
+    cantidadVenta: {
         type: Number,
         required: true,
         min: 1
     },
-    precioUnitario: {
+    valorUnitarioVenta: {
+        type: Number,
+        required: true,
+        min: 0
+    },
+    subTotalVenta: {
+        type: Number,
+        required: true,
+        min: 0
+    },
+    ivaVenta: {
+        type: Number,
+        default: 0.00,
+        min: 0
+    },
+    totalVenta: {
         type: Number,
         required: true,
         min: 0
     }
-}, {
-    timestamps: true
-});
+}, { timestamps: true });
 
 export const DetalleVentaModel = model('DetalleVenta', detalleVentaSchema);

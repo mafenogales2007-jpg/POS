@@ -1,33 +1,75 @@
 import jwt from 'jsonwebtoken';
 
-export const verificarToken = (req, res, next) => {
-    const authHeader = req.headers['authorization'];
-    
+/**
+ * Middleware para autenticar el token JWT emitido en el login
+ * Compatible con la estructura de Mafe (Usuarios) y el estándar RNF-03
+ */
+export const autenticarToken = (req, res, next) => {
+    let authHeader = req.headers['authorization'] || req.header('Authorization') || req.header('X-Token');
+
     if (!authHeader) {
         return res.status(401).json({
             success: false,
-            message: 'Acceso denegado. Token no proporcionado (401 Unauthorized).'
+            message: 'Acceso no autorizado: No se proporcionó la cabecera Authorization (401)'
         });
     }
 
-    const token = authHeader.split(' ')[1]; // Formato: Bearer TOKEN
-
-    if (!token) {
-        return res.status(401).json({
-            success: false,
-            message: 'Formato de token inválido.'
-        });
+    if (authHeader.startsWith('Bearer ')) {
+        authHeader = authHeader.slice(7).trim();
     }
 
     try {
         const secret = process.env.JWT_SECRET || 'clave_secreta_temporal';
-        const decoded = jwt.verify(token, secret);
-        req.usuario = decoded; // Guardamos los datos del usuario decodificados
+        const decoded = jwt.verify(authHeader, secret);
+        
+        // Guardamos los datos del usuario en la petición (soporta decoded.id o decoded._id)
+        req.usuario = {
+            _id: decoded._id || decoded.id,
+            id: decoded.id || decoded._id,
+            rol: (decoded.rol || decoded.role || 'CAJERO').toUpperCase(),
+            ...decoded
+        };
+
         next();
     } catch (error) {
-        return res.status(403).json({
+        return res.status(401).json({
             success: false,
-            message: 'Token inválido o expirado (403 Forbidden).'
+            message: 'Token inválido o expirado. Inicie sesión nuevamente.'
         });
     }
+};
+
+/**
+ * Middleware para autorizar roles específicos (ej. autorizarRoles('ADMIN'))
+ * Cumple con RF-01, RF-02, RF-08, RF-09
+ */
+export const autorizarRoles = (...rolesPermitidos) => {
+    return (req, res, next) => {
+        if (!req.usuario) {
+            return res.status(401).json({
+                success: false,
+                message: 'No hay usuario autenticado en la petición'
+            });
+        }
+
+        const rolUsuario = (req.usuario.rol || '').toUpperCase();
+        const permitidos = rolesPermitidos.flat().map(r => r.toUpperCase());
+
+        if (permitidos.length > 0 && !permitidos.includes(rolUsuario)) {
+            return res.status(403).json({
+                success: false,
+                message: `Acceso denegado: El rol '${rolUsuario}' no tiene permisos para realizar esta operación (se requiere: ${permitidos.join(' o ')})`
+            });
+        }
+
+        next();
+    };
+};
+
+export const verificarToken = autenticarToken;
+
+export default {
+    autenticarToken,
+    autorizarRoles,
+    verificarToken
 };

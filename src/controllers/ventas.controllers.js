@@ -1,81 +1,89 @@
 import { ventasService } from '../services/ventas.services.js';
+import { handleMongooseError } from '../helpers/handle-mongoose-error.helper.js';
 
-// 1. Crear / Registrar una nueva venta
-const createVenta = async (req, res) => {
+/**
+ * RF-07, RF-08, RNF-04:
+ * Endpoint POST /api/ventas (Cajeros y Admins)
+ */
+export const createVenta = async (req, res) => {
     try {
-        const resultado = await ventasService.crearVenta(req.body);
+        const ventaRegistrada = await ventasService.crearVenta(req.body, req.usuario);
         return res.status(201).json({
             success: true,
             message: 'Venta registrada exitosamente',
-            data: resultado.data
+            data: ventaRegistrada
         });
     } catch (error) {
-        return res.status(400).json({
-            success: false,
-            message: error.message
-        });
+        const errorParsed = handleMongooseError(error);
+        return res.status(errorParsed.status).json(errorParsed.response);
     }
 };
 
-// 2. Obtener todas las ventas (Listar historial)
-const getVentas = async (req, res) => {
+/**
+ * Endpoint GET /api/ventas
+ * Listar historial de ventas
+ */
+export const getVentas = async (req, res) => {
     try {
-        const resultado = await ventasService.obtenerVentas();
+        const ventas = await ventasService.obtenerVentas();
         return res.status(200).json({
             success: true,
-            data: resultado.data
+            message: 'Historial de ventas obtenido exitosamente',
+            data: ventas
         });
     } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: error.message
-        });
+        const errorParsed = handleMongooseError(error);
+        return res.status(errorParsed.status).json(errorParsed.response);
     }
 };
 
-// 3. Obtener una venta por ID
-const getVentaById = async (req, res) => {
+/**
+ * Endpoint GET /api/ventas/:id
+ * Consultar detalle de una venta por ID
+ */
+export const getVentaById = async (req, res) => {
     try {
         const { id } = req.params;
-        const resultado = await ventasService.obtenerVentaPorId(id);
-        if (!resultado.success) {
-            return res.status(404).json({ success: false, message: resultado.message });
+        const venta = await ventasService.obtenerVentaPorId(id);
+        if (!venta) {
+            return res.status(404).json({
+                success: false,
+                message: `La venta con ID '${id}' no fue encontrada`
+            });
         }
-        return res.status(200).json({ success: true, data: resultado.data });
-    } catch (error) {
-        return res.status(500).json({ success: false, message: error.message });
-    }
-};
-
-// 4. Actualizar una venta (Pendiente de implementar si lo requieres)
-const updateVenta = async (req, res) => {
-    res.json({ msg: 'Actualizar venta (Pendiente de implementar)' });
-};
-
-// 5. Eliminar o anular una venta
-const deleteVenta = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const resultado = await ventasService.eliminarVenta(id);
-        
-        if (!resultado.success) {
-            return res.status(404).json({ success: false, message: resultado.message });
-        }
-        
         return res.status(200).json({
             success: true,
-            message: resultado.message,
-            data: resultado.data
+            message: 'Detalle de venta obtenido exitosamente',
+            data: venta
         });
     } catch (error) {
-        return res.status(500).json({ success: false, message: error.message });
+        const errorParsed = handleMongooseError(error);
+        return res.status(errorParsed.status).json(errorParsed.response);
     }
 };
 
-export {
+/**
+ * RF-09:
+ * Endpoint PATCH /api/ventas/:id/anular (Exclusivo ADMIN)
+ */
+export const anularVentaController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const resultado = await ventasService.anularVenta(id);
+        return res.status(200).json({
+            success: true,
+            message: 'Venta anulada exitosamente y stock reintegrado al inventario',
+            data: resultado.venta
+        });
+    } catch (error) {
+        const errorParsed = handleMongooseError(error);
+        return res.status(errorParsed.status).json(errorParsed.response);
+    }
+};
+
+export default {
     createVenta,
     getVentas,
     getVentaById,
-    updateVenta,
-    deleteVenta
+    anularVentaController
 };

@@ -1,73 +1,46 @@
-    import { Schema, model } from 'mongoose';
+import { Schema, model } from 'mongoose';
 
-    // Subesquema para los productos individuales dentro de la venta
-    const DetalleVentaSchema = new Schema({
-        productoId: {
-            type: Schema.Types.ObjectId,
-            ref: 'Producto',
-            required: true
-        },
-        nombreProducto: {
-            type: String,
-            required: true
-        },
-        cantidad: {
-            type: Number,
-            required: true,
-            min: 1
-        },
-        precioUnitario: {
-            type: Number,
-            required: true,
-            min: 0
-        },
-        subtotal: {
-            type: Number,
-            required: true
-        }
-    });
+const ventasSchema = new Schema({
+    cliente: {
+        type: Schema.Types.ObjectId,
+        ref: 'Tercero',
+        required: true
+    },
+    cajero: {
+        type: Schema.Types.ObjectId,
+        ref: 'Usuario',
+        required: true
+    },
+    formaDePago: {
+        type: Schema.Types.ObjectId,
+        ref: 'FormaDePago',
+        required: true
+    },
+    subTotalVentas: {
+        type: Number,
+        required: true,
+        min: 0
+    },
+    descuento: {
+        type: Number,
+        default: 0.00,
+        min: 0
+    },
+    ivaVentas: {
+        type: Number,
+        default: 0.00,
+        min: 0
+    },
+    totalVentas: {
+        type: Number,
+        required: true,
+        min: 0
+    },
+    estadoVentas: {
+        type: String,
+        enum: ['Completada', 'Anulada', 'Pendiente'],
+        default: 'Completada'
+    }
+}, { timestamps: true });
 
-    // Esquema principal de la venta
-    const VentaSchema = new Schema(
-        {
-            cliente: {
-                type: Schema.Types.ObjectId,
-                ref: 'Cliente',
-                required: false
-            },
-            usuarioId: {
-                type: Schema.Types.ObjectId,
-                ref: 'Usuario',
-                required: false
-            },
-            productos: [DetalleVentaSchema],
-            metodoPago: {
-                type: String,
-                enum: ['efectivo', 'tarjeta', 'nequi', 'daviplata', 'transferencia'],
-                required: true,
-                default: 'efectivo'
-            },
-            subtotal: {
-                type: Number,
-                required: true
-            },
-            impuestos: {
-                type: Number,
-                default: 0
-            },
-            total: {
-                type: Number,
-                required: true
-            },
-            estado: {
-                type: String,
-                enum: ['completada', 'anulada', 'pendiente'],
-                default: 'completada'
-            }
-        },
-        {
-            timestamps: true
-        }
-    );
-
-    export const VentaModel = model('Venta', VentaSchema);
+export const VentasModel = model('Ventas', ventasSchema);

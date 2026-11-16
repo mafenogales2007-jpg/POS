@@ -1,14 +1,25 @@
 import { Router } from 'express';
-import { createVenta, getVentas, getVentaById, updateVenta, deleteVenta} from '../controllers/ventas.controllers.js';
-import { verificarToken } from '../middlewares/auth.middleware.js';
+import {
+    createVenta,
+    getVentas,
+    getVentaById,
+    anularVentaController
+} from '../controllers/ventas.controllers.js';
+import { autenticarToken, autorizarRoles } from '../middlewares/auth.middleware.js';
 
 const router = Router();
 
-// Definir rutas para Ventas
-router.get('/', getVentas);           // Listar todas las ventas
-router.get('/:id', getVentaById);     // Obtener una venta por su ID
-router.post('/', createVenta);        // Registrar una nueva venta
-router.put('/:id', updateVenta);      // Actualizar venta (pendiente)
-router.delete('/:id', deleteVenta);   // Eliminar o anular venta
+// Todas las rutas de ventas requieren autenticación de operador (RNF-03)
+router.use(autenticarToken);
+
+// RF-07: Listar historial y consultar ventas (Cajeros y Admins)
+router.get('/', getVentas);
+router.get('/:id', getVentaById);
+
+// RF-07, RF-08: Registrar venta transaccional (Cajeros y Admins)
+router.post('/', createVenta);
+
+// RF-09: Anulación supervisada de ventas (Exclusivo para ADMIN)
+router.patch('/:id/anular', autorizarRoles('ADMIN'), anularVentaController);
 
 export default router;
