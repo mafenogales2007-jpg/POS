@@ -1,14 +1,21 @@
+
 /**
  * Helper para capturar y transformar errores nativos de Mongoose
  * en respuestas HTTP limpias, legibles y amigables para el frontend.
- * 
- * Cumple con el estándar de respuesta del proyecto:
+ *
+ * Formato de respuesta:
  * { success: false, message: "Mensaje claro para el usuario" }
+ *
+ * @param {Error} error - Objeto de error capturado en el bloque catch
+ * @returns {{ status: number, response: { success: boolean, message: string } }}
  */
 export const handleMongooseError = (error) => {
+
+  // 1. Error de clave duplicada en MongoDB
   if (error.code === 11000) {
     const field = Object.keys(error.keyPattern || {})[0] || 'campo';
     const value = error.keyValue ? error.keyValue[field] : '';
+
     return {
       status: 400,
       response: {
@@ -18,8 +25,10 @@ export const handleMongooseError = (error) => {
     };
   }
 
+  // 2. Error de validación de Mongoose
   if (error.name === 'ValidationError') {
     const messages = Object.values(error.errors).map((err) => err.message);
+
     return {
       status: 400,
       response: {
@@ -29,6 +38,7 @@ export const handleMongooseError = (error) => {
     };
   }
 
+  // 3. Error de ID mal formado
   if (error.name === 'CastError') {
     return {
       status: 400,
@@ -39,6 +49,7 @@ export const handleMongooseError = (error) => {
     };
   }
 
+  // 4. Cualquier otro error general
   return {
     status: error.statusCode || 500,
     response: {

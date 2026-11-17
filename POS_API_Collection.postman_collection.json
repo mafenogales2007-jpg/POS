@@ -1,0 +1,247 @@
+{
+  "info": {
+    "_postman_id": "pos-api-mafe-trimestre-5",
+    "name": "POS API - Módulo Usuarios y Seguridad (Mafe)",
+    "description": "Colección completa de pruebas de la API REST para el módulo de TipoDocumento, Usuarios/Autenticación JWT y Terceros.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000/api",
+      "type": "string"
+    },
+    {
+      "key": "token_admin",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "tipo_doc_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01. Tipos de Documento",
+      "description": "Gestión de catálogo maestro de tipos de documento oficiales.",
+      "item": [
+        {
+          "name": "Listar Tipos de Documento",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/tipos-documento",
+              "host": ["{{base_url}}"],
+              "path": ["tipos-documento"]
+            },
+            "description": "Obtiene la lista de todos los tipos de documento activos."
+          }
+        },
+        {
+          "name": "Crear Tipo de Documento (CC)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"descripcionTipoDocumento\": \"CC\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/tipos-documento",
+              "host": ["{{base_url}}"],
+              "path": ["tipos-documento"]
+            },
+            "description": "Registra un nuevo tipo de documento (CC, TI, CE, NIT, RUT, PPT)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "02. Autenticación y Usuarios",
+      "description": "Módulo de seguridad, login con emisión de JWT y gestión de operadores POS.",
+      "item": [
+        {
+          "name": "Login Operador (Obtener JWT)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.success && json.data && json.data.token) {",
+                  "    pm.collectionVariables.set('token_admin', json.data.token);",
+                  "    console.log('Token guardado automáticamente en la variable token_admin');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identificador\": \"admin@senastore.com\",\n  \"clave\": \"Admin123*\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/users/login",
+              "host": ["{{base_url}}"],
+              "path": ["users", "login"]
+            },
+            "description": "Autentica al operador mediante documento o correo y retorna el token JWT."
+          }
+        },
+        {
+          "name": "Registrar Nuevo Operador (Solo ADMIN)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"documentoUsuario\": \"1020304050\",\n  \"tipoDocumento\": \"{{tipo_doc_id}}\",\n  \"nombreUsuario\": \"Carlos\",\n  \"apellidoUsuario\": \"Perez\",\n  \"emailUsuario\": \"carlos.cajero@senastore.com\",\n  \"claveUsuario\": \"Cajero2026*\",\n  \"rol\": \"CAJERO\",\n  \"telefonoUsuario\": \"3105557788\",\n  \"direccionUsuario\": \"Calle 10 # 5-20\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/users",
+              "host": ["{{base_url}}"],
+              "path": ["users"]
+            },
+            "description": "Crea un operador en el sistema con rol ADMIN o CAJERO (protegido por token y rol ADMIN)."
+          }
+        },
+        {
+          "name": "Ver Perfil Autenticado",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/perfil",
+              "host": ["{{base_url}}"],
+              "path": ["users", "perfil"]
+            },
+            "description": "Obtiene la información del operador autenticado a partir de su cabecera Bearer token."
+          }
+        },
+        {
+          "name": "Listar Operadores (Solo ADMIN)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users",
+              "host": ["{{base_url}}"],
+              "path": ["users"]
+            },
+            "description": "Lista el personal registrado (exclusivo para usuarios con rol ADMIN)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "03. Terceros (Clientes y Proveedores)",
+      "description": "Directorio comercial unificado para clientes y proveedores sin acceso al sistema.",
+      "item": [
+        {
+          "name": "Crear Cliente (Persona Natural)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"documentoTercero\": \"1098765432\",\n  \"tipoDocumento\": \"{{tipo_doc_id}}\",\n  \"nombreOrazonSocial\": \"Ana\",\n  \"apellido\": \"Gomez\",\n  \"tipoTercero\": [\"CLIENTE\"],\n  \"direccion\": \"Carrera 15 # 30-10\",\n  \"telefono\": \"3154443322\",\n  \"email\": \"ana.gomez@gmail.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/terceros",
+              "host": ["{{base_url}}"],
+              "path": ["terceros"]
+            },
+            "description": "Registra un cliente en el directorio central."
+          }
+        },
+        {
+          "name": "Listar Todos los Clientes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/terceros?tipo=CLIENTE",
+              "host": ["{{base_url}}"],
+              "path": ["terceros"],
+              "query": [
+                {
+                  "key": "tipo",
+                  "value": "CLIENTE"
+                }
+              ]
+            },
+            "description": "Obtiene los clientes registrados filtrados por tipo."
+          }
+        },
+        {
+          "name": "Buscar Tercero por Documento",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/terceros/documento/1098765432",
+              "host": ["{{base_url}}"],
+              "path": ["terceros", "documento", "1098765432"]
+            },
+            "description": "Búsqueda directa por número de documento para cobro ágil en caja."
+          }
+        }
+      ]
+    }
+  ]
+}
