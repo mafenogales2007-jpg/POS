@@ -1,3 +1,4 @@
+
 import { Schema, model } from 'mongoose';
 
 const detalleVentaSchema = new Schema({
@@ -39,3 +40,5 @@ const detalleVentaSchema = new Schema({
 }, { timestamps: true });
 
 export const DetalleVentaModel = model('DetalleVenta', detalleVentaSchema);
+
+export default DetalleVentaModel;

@@ -27,6 +27,16 @@ import detalleVentaRouter from './routers/detalleVenta.routers.js';
 import formaDePagoRouter from './routers/formaDePago.routers.js';
 import clientesRouter from './routers/clientes.routers.js';
 
+// Rutas del módulo Compras, Caja y Puntos
+import comprasRouter from './routers/compras.routers.js';
+import puntosRouter from './routers/puntos.routers.js';
+import cajaRouter from './routers/caja.routers.js';
+
+// Rutas del módulo Reportes
+import reportesAnaliticosRouter from './routers/reportesAnaliticos.routers.js';
+import productsRouter from './routes/products.routes.js';
+import reportesRouter from './routes/reportes.routes.js';
+
 const PORT = process.env.PORT || 3001;
 const app = express();
 
@@ -65,6 +75,18 @@ app.use('/api/detalles-venta', detalleVentaRouter);
 app.use('/api/formas-de-pago', formaDePagoRouter);
 app.use('/api/clientes', clientesRouter);
 
+// Rutas del módulo Compras, Caja y Puntos
+app.use('/api/compras', comprasRouter);
+app.use('/api/puntos', puntosRouter);
+app.use('/api/caja', cajaRouter);
+
+// Rutas del módulo Reportes
+app.use('/api/reportes', reportesAnaliticosRouter);
+app.use('/api/reportes-legacy', reportesRouter);
+
+// Rutas adicionales de productos
+app.use('/api/products', productsRouter);
+
 // Manejador de rutas no encontradas (404)
 app.use((req, res) => {
     res.status(404).json({
@@ -73,7 +95,7 @@ app.use((req, res) => {
     });
 });
 
-// Manejador global de errores (500)
+// Manejador global de errores
 app.use((err, req, res, next) => {
     console.error('Error no controlado:', err);
 

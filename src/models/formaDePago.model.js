@@ -1,3 +1,4 @@
+
 import { Schema, model } from 'mongoose';
 
 const formaDePagoSchema = new Schema({
@@ -10,3 +11,5 @@ const formaDePagoSchema = new Schema({
 }, { timestamps: true });
 
 export const FormaDePagoModel = model('FormaDePago', formaDePagoSchema);
+
+export default FormaDePagoModel;

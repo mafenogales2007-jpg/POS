@@ -1,3 +1,4 @@
+
 import { Schema, model } from 'mongoose';
 
 const ventasSchema = new Schema({
@@ -44,3 +45,5 @@ const ventasSchema = new Schema({
 }, { timestamps: true });
 
 export const VentasModel = model('Ventas', ventasSchema);
+
+export default VentasModel;

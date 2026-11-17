@@ -34,7 +34,6 @@ export const autenticarToken = async (req, res, next) => {
             });
         }
 
-        // Buscar al usuario mediante el ID incluido en el token
         const usuarioActivo = await UsersModel.findById(
             payload.id || payload._id
         );
@@ -46,7 +45,6 @@ export const autenticarToken = async (req, res, next) => {
             });
         }
 
-        // Datos del usuario autenticado
         req.usuario = {
             ...usuarioActivo.toObject(),
             id: usuarioActivo._id,
@@ -78,7 +76,6 @@ export const autenticarToken = async (req, res, next) => {
  */
 export const autorizarRoles = (...rolesPermitidos) => {
     return (req, res, next) => {
-
         if (!req.usuario) {
             return res.status(401).json({
                 success: false,

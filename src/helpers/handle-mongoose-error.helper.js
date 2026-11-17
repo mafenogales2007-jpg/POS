@@ -1,4 +1,3 @@
-
 /**
  * Helper para capturar y transformar errores nativos de Mongoose
  * en respuestas HTTP limpias, legibles y amigables para el frontend.
