@@ -1,12 +1,12 @@
+
 import mongoose from 'mongoose';
 import { ProductosModel } from '../models/productos.model.js';
 import { StockModel } from '../models/stock.model.js';
 import { CategoriaModel } from '../models/categorias.model.js';
 
 class ProductosService {
-    /**
-     * HU-05: Crear producto y vincular 1:1 con StockModel
-     */
+
+    // Crear producto e inicializar su stock
     async crearProducto(datos) {
         const session = await mongoose.startSession();
         session.startTransaction();
@@ -29,106 +29,151 @@ class ProductosService {
             const skuFinal = (sku || '').trim().toUpperCase();
             const nombreFinal = (nombreProductos || nombre || '').trim();
             const precioFinal = Number(precioVenta ?? precio ?? 0);
-            const descFinal = descripcionProductos || descripcion || '';
 
             if (!skuFinal) {
-                const err = new Error('El campo SKU es obligatorio y debe ser único');
-                err.statusCode = 400;
-                throw err;
+                const error = new Error('El SKU es obligatorio');
+                error.statusCode = 400;
+                throw error;
             }
 
             if (!nombreFinal) {
-                const err = new Error('El nombre del producto es obligatorio');
-                err.statusCode = 400;
-                throw err;
+                const error = new Error('El nombre del producto es obligatorio');
+                error.statusCode = 400;
+                throw error;
+            }
+
+            if (!Number.isFinite(precioFinal) || precioFinal < 0) {
+                const error = new Error('El precio debe ser un número válido y no negativo');
+                error.statusCode = 400;
+                throw error;
             }
 
             if (!categoria) {
-                const err = new Error('La categoría del producto es obligatoria');
-                err.statusCode = 400;
-                throw err;
+                const error = new Error('La categoría del producto es obligatoria');
+                error.statusCode = 400;
+                throw error;
             }
 
-            // Validar existencia de la categoría
-            const catExiste = await CategoriaModel.findById(categoria).session(session);
-            if (!catExiste) {
-                const err = new Error(`La categoría con ID '${categoria}' no existe`);
-                err.statusCode = 404;
-                throw err;
+            const iva = Number(ivaProductos);
+            const stockInicial = Number(totalStock);
+            const minimo = Number(stockMinimo);
+
+            if (!Number.isFinite(iva) || iva < 0 || iva > 100) {
+                const error = new Error('El IVA debe estar entre 0 y 100');
+                error.statusCode = 400;
+                throw error;
             }
 
-            // 1. Guardar ProductosModel
+            if (!Number.isFinite(stockInicial) || stockInicial < 0 ||
+                !Number.isFinite(minimo) || minimo < 0) {
+                const error = new Error('Las cantidades de stock deben ser números no negativos');
+                error.statusCode = 400;
+                throw error;
+            }
+
+            const categoriaExiste = await CategoriaModel
+                .findById(categoria)
+                .session(session);
+
+            if (!categoriaExiste) {
+                const error = new Error('La categoría indicada no existe');
+                error.statusCode = 404;
+                throw error;
+            }
+
+            const productoExistente = await ProductosModel
+                .findOne({ sku: skuFinal })
+                .session(session);
+
+            if (productoExistente) {
+                const error = new Error('Ya existe un producto con ese SKU');
+                error.statusCode = 409;
+                throw error;
+            }
+
             const nuevoProducto = new ProductosModel({
                 sku: skuFinal,
                 nombreProductos: nombreFinal,
-                descripcionProductos: descFinal,
+                descripcionProductos: descripcionProductos || descripcion || '',
                 precioVenta: precioFinal,
-                ivaProductos: Number(ivaProductos) || 0,
+                ivaProductos: iva,
                 categoria,
                 estadoProductos: true
             });
 
             const productoGuardado = await nuevoProducto.save({ session });
 
-            // 2. Vincular 1:1 e inicializar StockModel
             const nuevoStock = new StockModel({
                 producto: productoGuardado._id,
-                totalStock: Math.max(0, Number(totalStock) || 0),
-                stockMinimo: Math.max(0, Number(stockMinimo) || 5)
+                totalStock: stockInicial,
+                stockMinimo: minimo
             });
 
             const stockGuardado = await nuevoStock.save({ session });
 
             await session.commitTransaction();
-            session.endSession();
 
             return {
                 ...productoGuardado.toObject(),
-                stock: stockGuardado
+                totalStock: stockGuardado.totalStock,
+                stockMinimo: stockGuardado.stockMinimo,
+                stockCritico: stockGuardado.totalStock <= stockGuardado.stockMinimo
             };
+
         } catch (error) {
             await session.abortTransaction();
-            session.endSession();
             throw error;
+        } finally {
+            await session.endSession();
         }
     }
 
-    /**
-     * HU-05: Buscar por SKU indexado (< 2s, RNF-01)
-     */
+    // Buscar producto por SKU
     async obtenerProductoPorSku(sku) {
         const skuLimpio = (sku || '').trim().toUpperCase();
-        const producto = await ProductosModel.findOne({ sku: skuLimpio, estadoProductos: true })
-            .populate('categoria');
+
+        const producto = await ProductosModel.findOne({
+            sku: skuLimpio,
+            estadoProductos: true
+        }).populate('categoria');
 
         if (!producto) return null;
 
-        const stock = await StockModel.findOne({ producto: producto._id });
+        const stock = await StockModel.findOne({
+            producto: producto._id
+        });
 
         return {
             ...producto.toObject(),
-            totalStock: stock ? stock.totalStock : 0,
-            stockMinimo: stock ? stock.stockMinimo : 5,
-            stockCritico: stock ? (stock.totalStock <= stock.stockMinimo) : false
+            totalStock: stock?.totalStock ?? 0,
+            stockMinimo: stock?.stockMinimo ?? 5,
+            stockCritico: stock
+                ? stock.totalStock <= stock.stockMinimo
+                : false
         };
     }
 
-    /**
-     * Listar todos los productos con su stock vinculado
-     */
+    // Obtener todos los productos activos
     async obtenerProductos() {
-        const productos = await ProductosModel.find({ estadoProductos: true })
+        const productos = await ProductosModel.find({
+            estadoProductos: true
+        })
             .populate('categoria')
             .sort({ nombreProductos: 1 });
 
         const productosConStock = await Promise.all(
-            productos.map(async (prod) => {
-                const stock = await StockModel.findOne({ producto: prod._id });
+            productos.map(async (producto) => {
+                const stock = await StockModel.findOne({
+                    producto: producto._id
+                });
+
                 return {
-                    ...prod.toObject(),
-                    totalStock: stock ? stock.totalStock : 0,
-                    stockMinimo: stock ? stock.stockMinimo : 5,
-                    stockCritico: stock ? (stock.totalStock <= stock.stockMinimo) : false
+                    ...producto.toObject(),
+                    totalStock: stock?.totalStock ?? 0,
+                    stockMinimo: stock?.stockMinimo ?? 5,
+                    stockCritico: stock
+                        ? stock.totalStock <= stock.stockMinimo
+                        : false
                 };
             })
         );
@@ -136,20 +181,183 @@ class ProductosService {
         return productosConStock;
     }
 
-    /**
-     * Obtener producto por ID
-     */
+    // Obtener producto por ID
     async obtenerProductoPorId(id) {
-        const producto = await ProductosModel.findById(id).populate('categoria');
+        const producto = await ProductosModel.findOne({
+            _id: id,
+            estadoProductos: true
+        }).populate('categoria');
+
         if (!producto) return null;
 
-        const stock = await StockModel.findOne({ producto: producto._id });
+        const stock = await StockModel.findOne({
+            producto: producto._id
+        });
+
         return {
             ...producto.toObject(),
-            totalStock: stock ? stock.totalStock : 0,
-            stockMinimo: stock ? stock.stockMinimo : 5,
-            stockCritico: stock ? (stock.totalStock <= stock.stockMinimo) : false
+            totalStock: stock?.totalStock ?? 0,
+            stockMinimo: stock?.stockMinimo ?? 5,
+            stockCritico: stock
+                ? stock.totalStock <= stock.stockMinimo
+                : false
         };
+    }
+
+    // Actualizar producto y, si se solicita, sus existencias
+    async actualizarProducto(id, datos) {
+        const session = await mongoose.startSession();
+        session.startTransaction();
+
+        try {
+            const producto = await ProductosModel.findOne({
+                _id: id,
+                estadoProductos: true
+            }).session(session);
+
+            if (!producto) {
+                await session.abortTransaction();
+                return null;
+            }
+
+            const nombre = datos.nombreProductos ?? datos.nombre;
+            const descripcion = datos.descripcionProductos ?? datos.descripcion;
+            const precio = datos.precioVenta ?? datos.precio;
+
+            if (nombre !== undefined) {
+                if (!String(nombre).trim()) {
+                    const error = new Error('El nombre del producto es obligatorio');
+                    error.statusCode = 400;
+                    throw error;
+                }
+                producto.nombreProductos = String(nombre).trim();
+            }
+
+            if (descripcion !== undefined) {
+                producto.descripcionProductos = descripcion;
+            }
+
+            if (precio !== undefined) {
+                const precioNumero = Number(precio);
+
+                if (!Number.isFinite(precioNumero) || precioNumero < 0) {
+                    const error = new Error('El precio debe ser válido y no negativo');
+                    error.statusCode = 400;
+                    throw error;
+                }
+
+                producto.precioVenta = precioNumero;
+            }
+
+            if (datos.sku !== undefined) {
+                const nuevoSku = String(datos.sku).trim().toUpperCase();
+
+                if (!nuevoSku) {
+                    const error = new Error('El SKU es obligatorio');
+                    error.statusCode = 400;
+                    throw error;
+                }
+
+                producto.sku = nuevoSku;
+            }
+
+            if (datos.ivaProductos !== undefined) {
+                const iva = Number(datos.ivaProductos);
+
+                if (!Number.isFinite(iva) || iva < 0 || iva > 100) {
+                    const error = new Error('El IVA debe estar entre 0 y 100');
+                    error.statusCode = 400;
+                    throw error;
+                }
+
+                producto.ivaProductos = iva;
+            }
+
+            if (datos.categoria !== undefined) {
+                const categoriaExiste = await CategoriaModel
+                    .findById(datos.categoria)
+                    .session(session);
+
+                if (!categoriaExiste) {
+                    const error = new Error('La categoría indicada no existe');
+                    error.statusCode = 404;
+                    throw error;
+                }
+
+                producto.categoria = datos.categoria;
+            }
+
+            await producto.save({ session });
+
+            if (datos.totalStock !== undefined ||
+                datos.stockMinimo !== undefined) {
+
+                let stock = await StockModel.findOne({
+                    producto: producto._id
+                }).session(session);
+
+                if (!stock) {
+                    stock = new StockModel({
+                        producto: producto._id,
+                        totalStock: 0,
+                        stockMinimo: 5
+                    });
+                }
+
+                if (datos.totalStock !== undefined) {
+                    const cantidad = Number(datos.totalStock);
+
+                    if (!Number.isFinite(cantidad) || cantidad < 0) {
+                        const error = new Error('El stock no puede ser negativo');
+                        error.statusCode = 400;
+                        throw error;
+                    }
+
+                    stock.totalStock = cantidad;
+                }
+
+                if (datos.stockMinimo !== undefined) {
+                    const minimo = Number(datos.stockMinimo);
+
+                    if (!Number.isFinite(minimo) || minimo < 0) {
+                        const error = new Error('El stock mínimo no puede ser negativo');
+                        error.statusCode = 400;
+                        throw error;
+                    }
+
+                    stock.stockMinimo = minimo;
+                }
+
+                await stock.save({ session });
+            }
+
+            await session.commitTransaction();
+
+            return await this.obtenerProductoPorId(id);
+
+        } catch (error) {
+            await session.abortTransaction();
+            throw error;
+        } finally {
+            await session.endSession();
+        }
+    }
+
+    // Eliminación lógica para conservar el historial de ventas
+    async eliminarProducto(id) {
+        return await ProductosModel.findOneAndUpdate(
+            {
+                _id: id,
+                estadoProductos: true
+            },
+            {
+                $set: { estadoProductos: false }
+            },
+            {
+                new: true,
+                runValidators: true
+            }
+        );
     }
 }
 

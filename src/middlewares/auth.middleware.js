@@ -50,7 +50,12 @@ export const autenticarToken = async (req, res, next) => {
         req.usuario = {
             ...usuarioActivo.toObject(),
             id: usuarioActivo._id,
-            rol: (usuarioActivo.rol || payload.rol || payload.role || 'CAJERO').toUpperCase()
+            rol: (
+                usuarioActivo.rol ||
+                payload.rol ||
+                payload.role ||
+                'CAJERO'
+            ).toUpperCase()
         };
 
         req.userFound = usuarioActivo;

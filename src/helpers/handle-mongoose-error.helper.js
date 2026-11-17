@@ -11,52 +11,52 @@
  */
 export const handleMongooseError = (error) => {
 
-  // 1. Error de clave duplicada en MongoDB
-  if (error.code === 11000) {
-    const field = Object.keys(error.keyPattern || {})[0] || 'campo';
-    const value = error.keyValue ? error.keyValue[field] : '';
+    // 1. Error de clave duplicada en MongoDB
+    if (error.code === 11000) {
+        const field = Object.keys(error.keyPattern || {})[0] || 'campo';
+        const value = error.keyValue ? error.keyValue[field] : '';
 
-    return {
-      status: 400,
-      response: {
-        success: false,
-        message: `Ya existe un registro con el valor '${value}' en el campo '${field}'`
-      }
-    };
-  }
-
-  // 2. Error de validación de Mongoose
-  if (error.name === 'ValidationError') {
-    const messages = Object.values(error.errors).map((err) => err.message);
-
-    return {
-      status: 400,
-      response: {
-        success: false,
-        message: messages.join('. ')
-      }
-    };
-  }
-
-  // 3. Error de ID mal formado
-  if (error.name === 'CastError') {
-    return {
-      status: 400,
-      response: {
-        success: false,
-        message: `El identificador '${error.value}' no tiene un formato válido de ID`
-      }
-    };
-  }
-
-  // 4. Cualquier otro error general
-  return {
-    status: error.statusCode || 500,
-    response: {
-      success: false,
-      message: error.message || 'Error interno del servidor'
+        return {
+            status: 400,
+            response: {
+                success: false,
+                message: `Ya existe un registro con el valor '${value}' en el campo '${field}'`
+            }
+        };
     }
-  };
+
+    // 2. Error de validación de Mongoose
+    if (error.name === 'ValidationError') {
+        const messages = Object.values(error.errors).map((err) => err.message);
+
+        return {
+            status: 400,
+            response: {
+                success: false,
+                message: messages.join('. ')
+            }
+        };
+    }
+
+    // 3. Error de ID mal formado
+    if (error.name === 'CastError') {
+        return {
+            status: 400,
+            response: {
+                success: false,
+                message: `El identificador '${error.value}' no tiene un formato válido de ID`
+            }
+        };
+    }
+
+    // 4. Cualquier otro error general
+    return {
+        status: error.statusCode || 500,
+        response: {
+            success: false,
+            message: error.message || 'Error interno del servidor'
+        }
+    };
 };
 
 export default handleMongooseError;

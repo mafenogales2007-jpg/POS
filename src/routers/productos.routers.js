@@ -1,22 +1,41 @@
+
 import { Router } from 'express';
+
 import {
     createProducto,
     getProductos,
     getProductoBySku,
-    getProductoById
+    getProductoById,
+    patchProducto,
+    deleteProducto
 } from '../controllers/productos.controllers.js';
-import { autenticarToken, autorizarRoles } from '../middlewares/auth.middleware.js';
+
+import {
+    autenticarToken,
+    autorizarRoles
+} from '../middlewares/auth.middleware.js';
 
 const router = Router();
 
+// Todas las rutas requieren autenticación
 router.use(autenticarToken);
 
-// HU-05: Catálogo de productos y búsqueda rápida por SKU
+// Consultar todos los productos
 router.get('/', getProductos);
+
+// Buscar producto por SKU
 router.get('/sku/:sku', getProductoBySku);
+
+// Consultar producto por ID
 router.get('/:id', getProductoById);
 
-// Registrar producto (Solo ADMIN)
+// Crear producto (solo ADMIN)
 router.post('/', autorizarRoles('ADMIN'), createProducto);
+
+// Actualizar producto (solo ADMIN)
+router.patch('/:id', autorizarRoles('ADMIN'), patchProducto);
+
+// Eliminar producto (solo ADMIN)
+router.delete('/:id', autorizarRoles('ADMIN'), deleteProducto);
 
 export default router;
